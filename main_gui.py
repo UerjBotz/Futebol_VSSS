@@ -1,4 +1,4 @@
-from tkinter import*
+from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 from ttkthemes import ThemedTk
@@ -14,12 +14,13 @@ from PIL import Image,ImageTk
 
 import widgets as wg
 
-FILE = __file__
-path = FILE[:FILE.rfind('\\')+1]
-os.chdir(path)
+# FILE = __file__
+# path = FILE[:FILE.rfind('/') + 1]
+# os.chdir(path)
+path = os.getcwd()
 
 # INICIA A JANELA =========================================================
-window_gui = wg.window("Futebol VSSS - visão trevinho",ico=path+'gui/icon.ico',height=720)
+window_gui = wg.window("Futebol VSSS - visão trevinho",ico=os.path.join(path,'gui/icon.png'),height=720)
 win = window_gui.win
 # =========================================================================
 

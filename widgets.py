@@ -1,4 +1,4 @@
-from tkinter import*
+from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 from ttkthemes import ThemedTk
@@ -12,20 +12,22 @@ import cv2
 import numpy as np
 from PIL import Image,ImageTk,ImageOps
 
-FILE = __file__
-local_path = FILE[:FILE.rfind('\\')+1]
+# FILE = __file__
+# local_path = FILE[:FILE.rfind('\\')+1]
+local_path = os.getcwd()
 
 def constrain( x, MIN, MAX ):
     if( x <= MIN ): return MIN
     if( x >= MAX ): return MAX
     return x
+
 def hue2ttkColor(hue):
   color = cv2.cvtColor( np.array( [[[hue,255,255]]], np.uint8), cv2.COLOR_HSV2RGB)
   return f"#{color[0][0][0]:02X}{color[0][0][1]:02X}{color[0][0][2]:02X}"
 
 def tk_icon( w, h, path ):
     img = Image.open( path )
-    img = img.convert("RGBA").resize((w,h), Image.Resampling.LANCZOS )
+    img = img.convert("RGBA").resize((w,h), Image.LANCZOS )
     #icon = PhotoImage( file = path )
     icon = ImageTk.PhotoImage( img )
     return icon
@@ -41,7 +43,7 @@ class window:
         self.win.minsize( width=width, height=height )
 
         if(ico is not None):
-            self.win.iconbitmap( ico )
+            pass #self.win.iconphoto(False, PhotoImage(file=ico))
         # =========================================================================
         # style ==================================================================
         style = ttk.Style(self.win)
@@ -439,8 +441,8 @@ class record:
     def __init__( self, x, y, root, call, path = local_path, dt = 50 ):
         self.dt = dt
         w = 20
-        self.icon_play = tk_icon( w,w,path+'/images/icons/play-big.png')
-        self.icon_stop = tk_icon( w,w,path+'/images/icons/stop-big.png')
+        self.icon_play = tk_icon( w,w,os.path.join(path,'images/icons/play-big.png'))
+        self.icon_stop = tk_icon( w,w,os.path.join(path,'images/icons/stop-big.png'))
 
         self.path = path
         self.Flag_save = False
@@ -637,7 +639,7 @@ class bot_tag:
 
 
 class ball_tag:
-    def __init__(self, root, x, y, w, colors_hue = generic_color_hue, image_path = local_path+'/images/vsss_ball.png') -> None:
+    def __init__(self, root, x, y, w, colors_hue = generic_color_hue, image_path = os.path.join(local_path, 'images/vsss_ball.png')) -> None:
         self.x = x
         self.y = y
         self.w = w
@@ -682,7 +684,7 @@ class ball_tag:
 
 class mode_selection:
 
-    def __init__(self, root, x, y, w, title, options, images, text_size = 8, images_path = local_path+'/images/icons/') -> None:
+    def __init__(self, root, x, y, w, title, options, images, text_size = 8, images_path = os.path.join(local_path,'images/icons/')) -> None:
         
         self.x = x
         self.y = y
@@ -713,7 +715,7 @@ class mode_selection:
     def update( self, opt ):
         self.select = opt
         for i,name in enumerate(self.options):
-            img = (Image.open( self.images_path + self.images[i] ))
+            img = Image.open( os.path.join(self.images_path, self.images[i]) )
             if( name != opt ): img = ImageOps.grayscale(img)
             img = img.convert("RGBA").resize((self.w,self.w), Image.ANTIALIAS)
             if( name != opt ):
