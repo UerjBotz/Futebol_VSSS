@@ -1,4 +1,4 @@
-#import os
+import os
 import cv2
 import time
 import numpy as np
@@ -404,9 +404,10 @@ if __name__ == '__main__':
   start = time.time()
   
   FILE = __file__
-  path = FILE[:FILE.rfind('\\')+1]
+  # path = FILE[:FILE.rfind('\\')+1]
+  path = os.getcwd()
 
-  frame_1 = cv2.imread( path + '\images\\vsss_teste_cap.png' )
+  frame_1 = cv2.imread(os.path.join(path, 'images/vsss_teste_cap.png'))
 
   while(True):
       start = time.time()
@@ -435,3 +436,4 @@ if __name__ == '__main__':
       cv2.imshow('img',frame)
       if cv2.waitKey(1) == ord('q'):
           break
+
