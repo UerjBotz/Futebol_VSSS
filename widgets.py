@@ -193,10 +193,10 @@ class video_thread:
          self.cap.set(cv2.CAP_PROP_FPS, 120)
          if int((cv2.__version__).split('.')[0])  < 3 :
              fps = self.cap.get(cv2.cv.CV_CAP_PROP_FPS)
-             print("Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {0}".format(fps))
+             print(f"Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {fps}")
          else :
              fps = self.cap.get(cv2.CAP_PROP_FPS)
-             print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
+             print(f"Frames per second using video.get(cv2.CAP_PROP_FPS) : {fps}")
          (self.grabbed, self.frame) = self.cap.read()
          self.Flag_on = True
          self.n = 0
@@ -220,6 +220,7 @@ class video_thread:
                  self.n+=1
         print( "[ video thread ] end..." )
         self.Flag_running = False
+
     def read(self):
         self.n = 0
         return self.frame
