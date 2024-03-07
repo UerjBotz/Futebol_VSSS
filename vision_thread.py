@@ -393,7 +393,7 @@ if __name__ == '__main__':
 
   #gui.camera.cap.cap.set(cv2.CAP_PROP_FPS, 120)
 
-  video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+  video = cv2.VideoCapture(2)#, cv2.CAP_DSHOW)
   video.set(cv2.CAP_PROP_FPS, 120)
   video.set(cv2.CAP_PROP_FRAME_WIDTH, 3840/6)
   video.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160/6)
@@ -434,6 +434,6 @@ if __name__ == '__main__':
 
       cv2.putText( frame, f'FPS: {int(fps)}', (10,40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2, cv2.LINE_AA )
       cv2.imshow('img',frame)
-      if cv2.waitKey(1) == ord('q'):
-          break
+
+      if cv2.waitKey(1) == ord('q'): break
 

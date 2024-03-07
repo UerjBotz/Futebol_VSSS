@@ -187,9 +187,9 @@ class monitor:
 # IMAGE SOURCE ================================================================================
 from threading import Thread
 class video_thread:
-    def __init__(self, src=0, api = cv2.CAP_ANY): #cv2.CAP_DSHOW
+    def __init__(self, src=2, api = cv2.CAP_ANY): #cv2.CAP_DSHOW
          self.Flag_running = False
-         self.cap = cv2.VideoCapture(src, api)
+         self.cap = cv2.VideoCapture(src)#, api)
          self.cap.set(cv2.CAP_PROP_FPS, 120)
          if int((cv2.__version__).split('.')[0])  < 3 :
              fps = self.cap.get(cv2.cv.CV_CAP_PROP_FPS)
@@ -244,7 +244,7 @@ class Camera:
         
         self.frame = ttk.Frame( root, border=2)
         self.adds_ip = StringVar()
-        self.camera_source = ttk.OptionMenu( self.frame, self.adds_ip, '0', *[0,1,2,'IP','image'], command=self.start )
+        self.camera_source = ttk.OptionMenu( self.frame, self.adds_ip, '2', *[0,1,2,'IP','image'], command=self.start )
         self.camera_ip = ttk.Entry( self.frame, width=30, font=Font(size=10) )
         self.camera_ip.insert(0,'http://192.168.1.11:8080/video')
 
@@ -304,7 +304,7 @@ class Camera:
         
         self.ok = False
         self.mode = mode
-        self.src = 0
+        self.src = 2
         self.playing = True
 
         self.close()
@@ -327,7 +327,7 @@ class Camera:
                 self.src = self.camera_ip.get()
                 api = cv2.CAP_FFMPEG
             else:
-                self.src = self.mode
+                #self.src = self.mode
                 api = cv2.CAP_DSHOW
             
             self.cap = video_thread( self.src, api )
