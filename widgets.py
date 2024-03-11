@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageOps
 
-# FILE = __file__
+FILE = __file__
 # local_path = FILE[:FILE.rfind('\\')+1]
 local_path = os.getcwd()
 
@@ -104,10 +104,12 @@ class slider:
         self.length = length
         self.frame = ttk.Frame(main_frame, border=border)
         self.str_var = StringVar()
+
         if default is None:
             self.str_var.set(MIN)
         else:
             self.str_var.set(default)
+
         self.scale = ttk.Scale(
             self.frame,
             from_=MIN,
@@ -655,11 +657,13 @@ class record:
             self.time_ini = time.time()
             self.btn.config(image=self.icon_stop)
             print("open")
+
             self.file_name = f"{self.name.get()}.txt"
             self.f = open(self.file_name, "a")
             self.f.write("n,time,data\n")
             self.total_time = max(int(self.time.get()), 5)
             print(f"time: {self.total_time}ms")
+
             self.ID = self.frame.after(self.dt, self.call)
         else:
             if hasattr(self, "f"):

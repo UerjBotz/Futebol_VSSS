@@ -1,7 +1,7 @@
 import sys
 import glob
 import serial
-from time import sleep, time
+from time import sleep
 
 host = None
 
@@ -47,7 +47,7 @@ def list_ports():
         A list of the serial ports available on the system
     """
     if sys.platform.startswith("win"):
-        ports = ["COM%s" % (i + 1) for i in range(256)]
+        ports = [f"COM{i + 1}" for i in range(256)]
     elif sys.platform.startswith("linux") or sys.platform.startswith("cygwin"):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob("/dev/tty[A-Za-z]*")
@@ -64,6 +64,7 @@ def list_ports():
             result.append(port)
         except (OSError, serial.SerialException):
             pass
+
     return result
 
 
@@ -75,7 +76,7 @@ def send(data: list[int]) -> str:
     msg = "Send "
     for d in data:
         msg += f"{d} "
-    write(msg + " \n")
+    println(msg)
 
 
 def write(msg):
