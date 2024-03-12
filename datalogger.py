@@ -1,12 +1,13 @@
 from time import time as t
+from os import path
 
 # Data logger
 # Modulo registrador de dados
 # permite salvar medições
 
 FILE = __file__
-Path = FILE[: FILE.rfind("\\") + 1] + "/resultados/"
-file = Path + "resultados.txt"
+Path = path.join(path.dirname(FILE), "resultados")
+file = path.join(Path, "resultados.txt")
 
 dt = 0.3
 result = ""

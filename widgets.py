@@ -13,8 +13,7 @@ import numpy as np
 from PIL import Image, ImageTk, ImageOps
 
 FILE = __file__
-# local_path = FILE[:FILE.rfind('\\')+1]
-local_path = os.getcwd()
+local_path = os.path.dirname(FILE)
 
 
 # fmt: off

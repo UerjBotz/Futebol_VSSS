@@ -16,7 +16,7 @@ PX2CM = 0.1
 img = np.zeros((10, 10, 3), np.uint8)
 
 FILE = __file__
-path = FILE[: FILE.rfind("\\") + 1]
+path = os.path.dirname(FILE)
 os.chdir(path)
 
 bot_control = dif_driver_control(5, 0.168, 200, 0.068, kpgl=800 / 500)

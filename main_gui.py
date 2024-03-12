@@ -15,9 +15,8 @@ from PIL import Image, ImageTk
 import widgets as wg
 
 FILE = __file__
-# path = FILE[:FILE.rfind('/') + 1]
-# os.chdir(path)
-path = os.getcwd()
+path = os.path.dirname(FILE)
+os.chdir(path)
 
 # INICIA A JANELA =========================================================
 window_gui = wg.window(

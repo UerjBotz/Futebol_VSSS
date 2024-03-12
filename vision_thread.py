@@ -409,8 +409,7 @@ if __name__ == "__main__":
     start = time.time()
 
     FILE = __file__
-    # path = FILE[:FILE.rfind('\\')+1]
-    path = os.getcwd()
+    path = os.path.dirname(FILE)
 
     frame_1 = cv2.imread(os.path.join(path, "images/vsss_teste_cap.png"))
 

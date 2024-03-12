@@ -16,8 +16,8 @@ from controle import new_pid as pid
 PX2CM = 0.1  # conversão
 img = np.zeros((10, 10, 3), np.uint8)  # imagem
 # pasta
-# FILE = __file__
-path = os.getcwd()  # FILE[:FILE.rfind('\\')+1]
+FILE = __file__
+path = os.path.dirname(FILE)
 os.chdir(path)
 
 

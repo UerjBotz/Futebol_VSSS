@@ -15,7 +15,7 @@ from PIL import Image, ImageTk
 import widgets as wg
 
 FILE = __file__
-path = FILE[: FILE.rfind("\\") + 1]
+path = os.path.dirname(FILE)
 os.chdir(path)
 
 window_gui = wg.window("Amostragem", ico=path + "gui/icon.ico", height=150, width=500)
