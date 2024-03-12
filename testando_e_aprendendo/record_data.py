@@ -18,7 +18,7 @@ FILE = __file__
 path = os.path.dirname(FILE)
 os.chdir(path)
 
-window_gui = wg.window("Amostragem", ico=path + "gui/icon.ico", height=150, width=500)
+window_gui = wg.window("Amostragem", ico=path + "images/icon.ico", height=150, width=500)
 win = window_gui.win
 
 

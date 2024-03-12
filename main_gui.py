@@ -20,7 +20,7 @@ os.chdir(path)
 
 # INICIA A JANELA =========================================================
 window_gui = wg.window(
-    "Futebol VSSS - visão trevinho", ico=os.path.join(path, "gui/icon.png"), height=720
+    "Futebol VSSS - visão trevinho", ico=os.path.join(path, "images/icon.png"), height=720
 )
 win = window_gui.win
 # =========================================================================
