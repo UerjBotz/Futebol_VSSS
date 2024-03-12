@@ -421,7 +421,7 @@ class Camera:
                 self.src = self.camera_ip.get()
                 api = cv2.CAP_FFMPEG
             else:
-                # self.src = self.mode
+                self.src = self.mode #! estranho
                 api = cv2.CAP_DSHOW
 
             self.cap = video_thread(self.src, api)
@@ -459,7 +459,7 @@ class serial_consol:
 
     def __init__(self, x, y, root):
 
-        import Serial.transmissor as tx
+        import transmissor as tx
 
         self.tx = tx
         # Frames

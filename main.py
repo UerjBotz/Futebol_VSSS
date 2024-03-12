@@ -448,7 +448,6 @@ def loop():
                         bot_linear_speed = 0
                         bot_angular_speed = round(kth * erro_g, 3)
                     else:
-
                         # bola representando um obstaculo
                         if ball_ok:
                             F1 = 0
