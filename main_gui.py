@@ -114,7 +114,7 @@ rec_step = wg.record(10, 710, win, rec_step_call_default)
 
 
 # LOOP ==================================================================
-def loop():
+def loop() -> dict: # TODO: mudar nome para update ou tick alguma coisa assim, atualizar tipo
 
     # atualiza sliders
     painel.update()

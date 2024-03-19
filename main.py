@@ -177,7 +177,7 @@ def bench(frame):
     end = time.time()
     seconds = end - start
     fps = int(1 / max(seconds, 1e-5))
-    print(f"Estimated frames per second : {fps} - {int(1000*seconds)}ms")
+    #print(f"Estimated frames per second : {fps} - {int(1000*seconds)}ms") # TODO: log
     cv2.putText(
         frame,
         f"FPS: {int(fps)}",
@@ -242,7 +242,7 @@ def loop():
         gui.save.loop(img)
         # ====================================================================================
 
-        bench(img)
+        bench(img) #TODO: ver se precisa
 
         # MONITORES ==========================================================================
         # gui.monitor_camera.update_BGR( img )

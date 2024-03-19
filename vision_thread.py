@@ -181,8 +181,15 @@ def inrange(A, h_min, h_max, s_min, v_min):
     )
     return np.array(C, np.uint8)
 
-
-def vision(img, COLOR, IN, conv):
+""" # TODO: fazer isso com a entrada ou algo assim
+@dataclass
+class IN():
+   saturação: int
+   valor: int
+   cor: int
+   delta: int
+"""
+def vision(img: np.ndarray, COLOR: dict[int], IN: dict[any], conv: int): #frame, dict das cores, dicionario pra coisas extras, conversão px2cm
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -360,35 +367,34 @@ def vision(img, COLOR, IN, conv):
     return (game, img_data)
 
 
-COLOR = {}
-IN = {"S min": 70, "V min": 70, "delta": 20, "area min": 20}
-
-COLOR["MIN"] = {
-    "orange": 12,
-    "yellow": 28,
-    "green": 55,
-    "blue": 85,
-    "darkblue": 116,
-    "pink": 151,
-    "red": 178,
-}
-
-COLOR["MAX"] = {
-    "orange": 28,
-    "yellow": 55,
-    "green": 85,
-    "blue": 116,
-    "darkblue": 151,
-    "pink": 178,
-    "red": 12,
-}
-
-COLOR["MEAN"] = {
-    color: (COLOR["MAX"][color] + COLOR["MIN"][color]) // 2 for color in COLOR["MIN"]
-}
-
-
 if __name__ == "__main__":
+
+    COLOR = {}
+    IN = {"S min": 70, "V min": 70, "delta": 20, "area min": 20}
+    
+    COLOR["MIN"] = {
+        "orange": 12,
+        "yellow": 28,
+        "green": 55,
+        "blue": 85,
+        "darkblue": 116,
+        "pink": 151,
+        "red": 178,
+    }
+    
+    COLOR["MAX"] = {
+        "orange": 28,
+        "yellow": 55,
+        "green": 85,
+        "blue": 116,
+        "darkblue": 151,
+        "pink": 178,
+        "red": 12,
+    }
+    
+    COLOR["MEAN"] = {
+        color: (COLOR["MAX"][color] + COLOR["MIN"][color]) // 2 for color in COLOR["MIN"]
+    }
 
     print("-- MAIN --")
 
@@ -434,7 +440,7 @@ if __name__ == "__main__":
         end = time.time()
         seconds = end - start
         fps = int(1 / seconds)
-        print(f"Estimated frames per second : {fps} - {int(1000*seconds)}ms")
+        #print(f"Estimated frames per second : {fps} - {int(1000*seconds)}ms") #TODO: log
 
         cv2.putText(
             frame,
