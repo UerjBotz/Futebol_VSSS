@@ -7,7 +7,7 @@ from vision_thread import vision, complex_to_xy
 import cv2
 import numpy as np
 from math import floor
-import main_gui as gui
+import gui
 from controle import new_pid as pid
 
 

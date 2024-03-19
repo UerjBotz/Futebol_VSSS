@@ -5,7 +5,7 @@ from cmath import polar, phase
 # from vision import vision
 from vision_thread import vision
 import numpy as np
-import main_gui as gui
+import gui
 from controle import pd, constrain, dif_driver_control
 import cv2
 from math import floor

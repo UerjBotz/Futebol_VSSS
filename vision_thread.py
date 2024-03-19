@@ -400,7 +400,7 @@ if __name__ == "__main__":
 
     # time.sleep(2)
 
-    # import main_gui as gui
+    # import gui
 
     # gui.camera.cap.cap.set(cv2.CAP_PROP_FPS, 120)
 
