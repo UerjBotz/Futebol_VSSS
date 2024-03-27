@@ -2,7 +2,6 @@ import os
 import time
 from cmath import polar, phase
 
-# from vision import vision
 from vision_thread import vision, complex_to_xy
 import cv2
 import numpy as np
@@ -25,6 +24,15 @@ os.chdir(path)
 
 bot_control_lin = pid()
 bot_control_ang = pid()
+
+from enum import Enum, auto
+class Strat(Enum):
+    CENTRO = auto()
+    kick   = auto()
+    v_vick = auto()
+    REPELE = auto()
+    VECT   = auto()
+    STOP   = auto()
 
 LAST_MODE = ""
 vs_flag_new_data = False
@@ -311,7 +319,7 @@ def loop():
         x = int(p.real)  # ??
 
         ## Controle do robô ===================================================
-        if bot_ok:
+        if bot_ok: # TODO: tirar esse if e ver oqq esse bot_ok é
 
             plot_x(monitors["vision"], p, color=(110, 255, 255))
             kl = 0.1 * gui.painel_pid.sliders["kl"].get()

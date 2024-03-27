@@ -93,7 +93,7 @@ bot = {
     "yellow": [wg.bot_tag(win, 235 + i * 195, 630, 60, "yellow") for i in range(3)],
 }
 
-mode = wg.mode_selection(
+mode = wg.mode_selection( # TODO: mudar pra mode_wg ou strat_wg
     win,
     10,
     545,
