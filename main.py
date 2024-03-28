@@ -25,15 +25,6 @@ os.chdir(path)
 bot_control_lin = pid()
 bot_control_ang = pid()
 
-from enum import Enum, auto
-class Strat(Enum):
-    CENTRO = auto()
-    kick   = auto()
-    v_vick = auto()
-    REPELE = auto()
-    VECT   = auto()
-    STOP   = auto()
-
 LAST_MODE = ""
 vs_flag_new_data = False
 vs = {}
