@@ -29,11 +29,11 @@ win = window_gui.win
 # BEGIN ==============================================================
 
 # camera
-camera = wg.Camera(10, 450, "camera", win)
+camera = wg.camera(10, 450, "camera", win)
 save = wg.save_image(10, 480, win)
 
 # serial
-serial = wg.serial_consol(10, 510, win)
+serial = wg.console_serial(10, 510, win)
 
 # monitores
 monitor_camera = wg.monitor(10, 10, 500, 400, "Camera", win)
@@ -46,25 +46,25 @@ tag0 = wg.tag(10, 10, win)
 
 # ajustes gerais
 painel = wg.panel("ajustes do sistema de visão", win, x=810, y=10)
-painel.add_slider(0, 255, "S min", 1, default=86)
-painel.add_slider(0, 255, "V min", 2, default=86)
-painel.add_slider(0, 100, "Y0", 3, default=21)
-painel.add_slider(0, 100, "Y fim", 4, default=94)
-painel.add_slider(10, 200, "H", 5, default=71, unit="cm")
-painel.add_slider(1, 100, "area min", 6, default=20)
-painel.add_slider(0, 100, "delta", 7, default=15)
+painel.add_slider(0,  255, "S min",    row=1, default=86, unit="")
+painel.add_slider(0,  255, "V min",    row=2, default=86, unit="")
+painel.add_slider(0,  100, "Y0",       row=3, default=21, unit="px?")
+painel.add_slider(0,  100, "Y fim",    row=4, default=94, unit="px?")
+painel.add_slider(10, 200, "H",        row=5, default=71, unit="cm")
+painel.add_slider(1,  100, "area min", row=6, default=20, unit="px?")
+painel.add_slider(0,  100, "delta",    row=7, default=15, unit="?")
 
 # ajuste PID
 painel_pid = wg.panel("Controlador", win, x=810, y=480)
-painel_pid.add_slider(0, 100, "vel", 1, default=0, unit="%")
-painel_pid.add_slider(0, 100, "w", 2, default=0, unit="%")
-painel_pid.add_slider(0, 100, "kl", 3, default=18)  # erro maximo lin
-painel_pid.add_slider(0, 100, "kth", 4, default=70)  # erro maximo lin
-painel_pid.add_slider(0, 100, "Q_ball", 5, default=30)  # 68
-painel_pid.add_slider(0, 100, "Q_obs", 6, default=9)
-painel_pid.add_slider(1, 100, "Dmin", 7, default=50, unit="%")
-painel_pid.add_slider(1, 1000, "theta", 8, default=50, unit="%")
-painel_pid.add_slider(1, 1000, "raio", 9, default=50, unit="%")
+painel_pid.add_slider(0, 100,  "vel",    row=1, default=0,  unit="%")
+painel_pid.add_slider(0, 100,  "w",      row=2, default=0,  unit="%")
+painel_pid.add_slider(0, 100,  "kl",     row=3, default=18, unit="?") # err max lin
+painel_pid.add_slider(0, 100,  "kth",    row=4, default=70, unit="?") # err max lin
+painel_pid.add_slider(0, 100,  "Q_ball", row=5, default=30, unit="?") # 68
+painel_pid.add_slider(0, 100,  "Q_obs",  row=6, default=9,  unit="?")
+painel_pid.add_slider(1, 100,  "Dmin",   row=7, default=50, unit="%")
+painel_pid.add_slider(1, 1000, "theta",  row=8, default=50, unit="%")
+painel_pid.add_slider(1, 1000, "raio",   row=9, default=50, unit="%")
 
 # tag 1
 tag_pid = wg.tag(810, 480, win)
@@ -82,7 +82,7 @@ colors_default = {
 
 painel_cores = wg.panel("cores", win, 810, 245)
 for i, color in enumerate(colors_default):
-    painel_cores.add_slider(0, 180, f"{color}", 1 + i, default=colors_default[color])
+    painel_cores.add_slider(0, 180, f"{color}", row=1+i, default=colors_default[color], unit="h")
 
 # ball
 ball = wg.ball_tag(win, 10, 625, 65)
@@ -117,10 +117,10 @@ rec_step = wg.record(10, 710, win, rec_step_call_default)
 def loop() -> dict: # TODO: mudar nome para update ou tick alguma coisa assim, atualizar tipo
 
     # atualiza sliders
-    painel.update()
-    painel_cores.update()
-    painel_pid.update()
-    rec_step.voltage.update()
+    painel.update_sliders()
+    painel_cores.update_sliders()
+    painel_pid.update_sliders()
+    rec_step.voltage.update_label()
 
     # UPDATE COLORS =======================================================================
     color_hue_min = [painel_cores.sliders[c].get() for c in painel_cores.sliders]

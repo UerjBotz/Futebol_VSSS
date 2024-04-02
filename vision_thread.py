@@ -173,8 +173,8 @@ def sort_bots(dict):
 
 print("BEGIN")
 
-
-def inrange(A, h_min, h_max, s_min, v_min):
+matriz = np.ndarray
+def inrange(A: matriz, h_min, h_max, s_min, v_min):
     C = np.logical_and(
         np.logical_and(A[:, :, 0] > h_min, A[:, :, 0] < h_max),
         np.logical_and(A[:, :, 1] > s_min, A[:, :, 2] > v_min),

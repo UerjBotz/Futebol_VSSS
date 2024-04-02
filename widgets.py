@@ -89,12 +89,13 @@ class slider:
         MAX,
         name,
         main_frame,
-        row=0,
-        length=200,
-        default=None,
-        unit="",
+        *,
+        row,
+        length,
+        default,
+        unit,
         border=3,
-        lable_width=13,
+        label_width=13
     ) -> None:
         self.unit = unit
         self.MIN = MIN
@@ -139,7 +140,7 @@ class slider:
             text=f" {name}: {self.scale.get()}",
             foreground="white",
             background="#333333",
-            width=lable_width,
+            width=label_width,
         )
         self.frame.grid(column=0, row=row, padx=0)
         self.btn_L.grid(column=0, row=0, padx=0)
@@ -150,7 +151,7 @@ class slider:
     def get(self):
         return int(self.scale.get())
 
-    def update(self):
+    def update_label(self):
         self.label.configure(text=f" {self.name}: {int(self.scale.get())}{self.unit}")
 
     def color(self, txt_color):
@@ -171,7 +172,7 @@ class panel:
         self.sliders = {}
         self.buttons = {}
 
-    def add_slider(self, MIN, MAX, name, row=0, length=200, default=None, unit=""):
+    def add_slider(self, MIN, MAX, name, *, row, default, unit, length=200):
         self.sliders[name] = slider(
             MIN,
             MAX,
@@ -183,9 +184,9 @@ class panel:
             unit=unit,
         )
 
-    def update(self):
+    def update_sliders(self):
         for s in self.sliders:
-            self.sliders[s].update()
+            self.sliders[s].update_label()
 
 
 # TAG ===========================================================================================================
@@ -198,11 +199,11 @@ class tag:
         )
         self.frame = ttk.Frame(root, padding=5)
         self.frame.place(x=x, y=y)
-        self.lable = ttk.Label(self.frame, text="")
-        self.lable.grid(column=0, row=0)
+        self.label = ttk.Label(self.frame, text="")
+        self.label.grid(column=0, row=0)
 
     def set(self, txt):
-        self.lable.configure(text=txt)
+        self.label.configure(text=txt)
 
 
 # BUTTON ===========================================================================================================
@@ -240,16 +241,16 @@ class monitor:
             justify=CENTER,
             font=self.f1,
         )
-        self.tela_lable = ttk.Label(self.frame_tela, text=title)
+        self.tela_label = ttk.Label(self.frame_tela, text=title)
         self.tela_title.grid(column=0, row=0)
-        self.tela_lable.grid(column=0, row=1)
+        self.tela_label.grid(column=0, row=1)
 
     def update(self, img):
         img = cv2.resize(img, (self.w, self.h))
         image = Image.fromarray(img)
         pic = ImageTk.PhotoImage(image)
-        self.tela_lable.configure(image=pic)
-        self.tela_lable.image = pic
+        self.tela_label.configure(image=pic)
+        self.tela_label.image = pic
 
     def update_hsv(self, hsv):
         self.update(cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB))
@@ -314,7 +315,7 @@ class video_thread:
         return self.n
 
 
-class Camera:
+class camera:
 
     def __init__(self, x, y, title, root) -> None:
 
@@ -454,7 +455,7 @@ class Camera:
 # SERIAL ================================================================================================
 
 
-class serial_consol:
+class console_serial:
 
     def __init__(self, x, y, root):
 
@@ -601,11 +602,12 @@ class record:
             100,
             "step",
             self.frame2,
+            row=0,
             length=50,
             default=50,
             border=2,
             unit="%",
-            lable_width=11,
+            label_width=11,
         )
 
         # progressbar
@@ -692,7 +694,7 @@ class record:
             if dt > self.total_time:
                 self.change()
 
-    def save_lable(self, list):
+    def save_label(self, list):
         if self.can_write():
             data = ",".join(map(str, list))
             self.f.write(f"N,time,{data}\n")
@@ -882,7 +884,7 @@ class mode_selection:
         self.frame = ttk.Frame(root, border=1, padding=3, relief="solid")
         self.frame.place(x=x, y=y)
 
-        self.lable_select_txt = ttk.Label(
+        self.label_select_txt = ttk.Label(
             self.frame,
             padding=0,
             text=title,
@@ -890,7 +892,7 @@ class mode_selection:
             anchor="center",
             font=Font(weight="bold", size=text_size),
         )
-        self.lable_select_txt.grid(column=0, columnspan=len(options) + 1, row=2)
+        self.label_select_txt.grid(column=0, columnspan=len(options) + 1, row=2)
 
         self.opt_l_name = {}
         self.opt_l_img = {}
@@ -959,7 +961,7 @@ if __name__ == "__main__":
 
     monitor_camera = monitor(620, 10, 300, 200, "camera", G.win)
     camera = Camera(620, 260, "CAM", G.win)
-    serial = serial_consol(620, 290, G.win)
+    serial = console_serial(620, 290, G.win)
 
     save = save_image(620, 324, G.win)
 
@@ -987,7 +989,7 @@ if __name__ == "__main__":
 
         monitor_camera.update_BGR(camera.read())
 
-        painel.update()
+        painel.update_label()
 
         c = [
             painel_cores.sliders["red"].get(),
