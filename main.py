@@ -221,15 +221,15 @@ def loop():
 
         img = gui.camera.read()
         h, w, _ = img.shape
-        MIN = int((h - 1) * gui.painel.sliders["Y0"].get() / 100.0)
-        MAX = int((h - 1) * gui.painel.sliders["Y fim"].get() / 100.0)
+        MIN = int((h - 1) * gui.painel_visão.sliders["Y0"].get() / 100.0)
+        MAX = int((h - 1) * gui.painel_visão.sliders["Y fim"].get() / 100.0)
         if MAX <= MIN:
             MIN = MAX - 1
         k = (MAX - MIN) / h
         img = img[MIN:MAX, int((0.5 - k / 2.0) * w) : int((0.5 + k / 2.0) * w)]
 
         global PX2CM
-        PX2CM = gui.painel.sliders["H"].get() / img.shape[0]
+        PX2CM = gui.painel_visão.sliders["H"].get() / img.shape[0]
         campo_mm_x = int(10.0 * PX2CM * img.shape[1])
         campo_mm_y = int(10.0 * PX2CM * img.shape[0])
         gui.tag0.set(f"campo: ({campo_mm_x},{campo_mm_y})mm / {10*PX2CM:0.2f}mm/px")

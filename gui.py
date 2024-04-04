@@ -36,35 +36,43 @@ save = wg.save_image(10, 480, win)
 serial = wg.console_serial(10, 510, win)
 
 # monitores
-monitor_camera = wg.monitor(10, 10, 500, 400, "Camera", win)
+monitor_camera = wg.monitor(10, 10, 500, 400, "Câmera", win)
 monitor_mask = wg.monitor(530, 10, 250, 200, "Elementos", win)
 tagHZ = wg.tag(530, 10, win)
-monitor_colors = wg.monitor(530, 250, 250, 200, "Mascaras de Cores", win)
+monitor_colors = wg.monitor(530, 250, 250, 200, "Máscaras de Cores", win)
 
 # tags
 tag0 = wg.tag(10, 10, win)
 
 # ajustes gerais
-painel = wg.panel("ajustes do sistema de visão", win, x=810, y=10)
-painel.add_slider(0,  255, "S min",    row=1, default=86, unit="")
-painel.add_slider(0,  255, "V min",    row=2, default=86, unit="")
-painel.add_slider(0,  100, "Y0",       row=3, default=21, unit="px?")
-painel.add_slider(0,  100, "Y fim",    row=4, default=94, unit="px?")
-painel.add_slider(10, 200, "H",        row=5, default=71, unit="cm")
-painel.add_slider(1,  100, "area min", row=6, default=20, unit="px?")
-painel.add_slider(0,  100, "delta",    row=7, default=15, unit="?")
+ajustes_visão = [
+    dict(name="S min",    MIN=0,  MAX=255, default=86, unit=""),
+    dict(name="V min",    MIN=0,  MAX=255, default=86, unit=""),
+    dict(name="Y0",       MIN=0,  MAX=100, default=21, unit="px?"),
+    dict(name="Y fim",    MIN=0,  MAX=100, default=94, unit="px?"),
+    dict(name="H",        MIN=10, MAX=200, default=71, unit="cm"),
+    dict(name="area min", MIN=1,  MAX=100, default=20, unit="px?"),
+    dict(name="delta",    MIN=0,  MAX=100, default=15, unit="?"),
+]
+painel_visão = wg.painel("ajustes do sistema de visão", win, x=810, y=10)
+for ajuste in ajustes_visão:
+    painel_visão.add_slider(**ajuste)
 
 # ajuste PID
-painel_pid = wg.panel("Controlador", win, x=810, y=480)
-painel_pid.add_slider(0, 100,  "vel",    row=1, default=0,  unit="%")
-painel_pid.add_slider(0, 100,  "w",      row=2, default=0,  unit="%")
-painel_pid.add_slider(0, 100,  "kl",     row=3, default=18, unit="?") # err max lin
-painel_pid.add_slider(0, 100,  "kth",    row=4, default=70, unit="?") # err max lin
-painel_pid.add_slider(0, 100,  "Q_ball", row=5, default=30, unit="?") # 68
-painel_pid.add_slider(0, 100,  "Q_obs",  row=6, default=9,  unit="?")
-painel_pid.add_slider(1, 100,  "Dmin",   row=7, default=50, unit="%")
-painel_pid.add_slider(1, 1000, "theta",  row=8, default=50, unit="%")
-painel_pid.add_slider(1, 1000, "raio",   row=9, default=50, unit="%")
+ajustes_pid = [
+    dict(name="vel",    MIN=0, MAX=100,  default=0,  unit="%"),
+    dict(name="w",      MIN=0, MAX=100,  default=0,  unit="%"),
+    dict(name="kl",     MIN=0, MAX=100,  default=18, unit="?"), # err max lin
+    dict(name="kth",    MIN=0, MAX=100,  default=70, unit="?"), # err max lin
+    dict(name="Q_ball", MIN=0, MAX=100,  default=30, unit="?"), # 68
+    dict(name="Q_obs",  MIN=0, MAX=100,  default=9,  unit="?"),
+    dict(name="Dmin",   MIN=1, MAX=100,  default=50, unit="%"),
+    dict(name="theta",  MIN=1, MAX=1000, default=50, unit="%"),
+    dict(name="raio",   MIN=1, MAX=1000, default=50, unit="%"),
+]
+painel_pid = wg.painel("ajustes do controlador", win, x=810, y=480)
+for ajuste in ajustes_pid:
+    painel_pid.add_slider(**ajuste)
 
 # tag 1
 tag_pid = wg.tag(810, 480, win)
@@ -79,10 +87,9 @@ colors_default = {
     "pink": 134,
     "red": 180,  # 169
 }
-
-painel_cores = wg.panel("cores", win, 810, 245)
-for i, color in enumerate(colors_default):
-    painel_cores.add_slider(0, 180, f"{color}", row=1+i, default=colors_default[color], unit="h")
+painel_cores = wg.painel("ajustes de cores", win, 810, 245)
+for i, (color, hue) in enumerate(colors_default.items()):
+    painel_cores.add_slider(name=color, MIN=0, MAX=180, default=hue, unit="º")
 
 # ball
 ball = wg.ball_tag(win, 10, 625, 65)
@@ -117,7 +124,7 @@ rec_step = wg.record(10, 710, win, rec_step_call_default)
 def loop() -> dict: # TODO: mudar nome para update ou tick alguma coisa assim, atualizar tipo
 
     # atualiza sliders
-    painel.update_sliders()
+    painel_visão.update_sliders()
     painel_cores.update_sliders()
     painel_pid.update_sliders()
     rec_step.voltage.update_label()
@@ -150,7 +157,7 @@ def loop() -> dict: # TODO: mudar nome para update ou tick alguma coisa assim, a
     for i, color in enumerate(painel_cores.sliders):
         painel_cores.sliders[color].color(wg.hue2ttkColor(VS_COLORS["MEAN"][color]))
 
-    VS_IN = {ajuste: painel.sliders[ajuste].get() for ajuste in painel.sliders}
+    VS_IN = {ajuste: painel_visão.sliders[ajuste].get() for ajuste in painel_visão.sliders}
 
     # print( "VS IN:", VS_IN )
 
