@@ -1,3 +1,6 @@
+from json import load
+from os import path
+
 # fmt: off
 ajustes_visão = [
     dict(name="S min",    MIN=0,  MAX=255, default=86, unit=""),   
@@ -8,6 +11,11 @@ ajustes_visão = [
     dict(name="area min", MIN=1,  MAX=100, default=20, unit="px?"),
     dict(name="delta",    MIN=0,  MAX=100, default=15, unit="?"),
 ]
+try:
+    with open(path.join("config", "ajustes_da_visão.json")) as ajuste:
+        for a,b in zip(ajustes_visão, load(ajuste)): a.update(b)
+except:
+    pass    
 
 ajustes_pid = [
      dict(name="vel",    MIN=0, MAX=100,  default=0,  unit="%"),
@@ -20,6 +28,11 @@ ajustes_pid = [
      dict(name="theta",  MIN=1, MAX=1000, default=50, unit="%"),
      dict(name="raio",   MIN=1, MAX=1000, default=50, unit="%"),
 ]
+try:
+    with open(path.join("config", "ajustes_do_controlador.json")) as ajuste:
+        for a,b in zip(ajustes_pid, load(ajuste)): a.update(b)
+except:
+    pass    
 
 ajustes_cores = [
     dict(name="orange",   default=3  ), # 7,
@@ -30,5 +43,11 @@ ajustes_cores = [
     dict(name="pink",     default=134),
     dict(name="red",      default=180), # 169 
 ]
+try:
+    with open(path.join("config", "ajustes_de_cores.json")) as ajuste:
+        for a,b in zip(ajustes_cores, load(ajuste)): a.update(b)
+except:
+    pass    
+
 # fmt: on
 

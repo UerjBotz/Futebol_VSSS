@@ -173,6 +173,7 @@ class painel:
         self.sliders = {}
         self.buttons = {}
         self.num_sliders = 0
+        self.x, self.y = x, y
 
     def add_slider(self, **kwargs):
         if "row" in kwargs:
@@ -186,12 +187,25 @@ class painel:
             **kwargs
         )
 
+    def add_button(self, **kwargs):
+        x, y = self.x, self.y
+        self.buttons["save"] = button(x, y, name="save", root=self.frame, f=self.save_as_json)
+
     def update_sliders(self):
         for s in self.sliders.values():
             s.update_label()
 
+    def save_as_json(self):
+        from json import dump
+        lista = [{"name": nome, "default": slider.get()}
+                 for nome, slider in self.sliders.items()]
+        caminho = os.path.join("config", f"{self.name}.json")
+        with open(caminho, "wt") as f:
+            dump(lista, f, indent=4)
 
-# TAG ===========================================================================================================
+
+
+# TAG ====================================================================
 class tag:
     def __init__(self, x, y, root) -> None:
         self.x = x
@@ -208,9 +222,9 @@ class tag:
         self.label.configure(text=txt)
 
 
-# BUTTON ===========================================================================================================
+# BUTTON =================================================================
 class button:
-    def __init__(self, x, y, name, root) -> None:
+    def __init__(self, x, y, name, root, f=None) -> None:
         self.x = x
         self.y = y
         self.f1 = Font(
@@ -219,11 +233,13 @@ class button:
         self.button = ttk.Button(text=name)
         self.button.place(x=x, y=y)
 
+        if not (f is None): self.button.configure(command=f)
+
     def set_function(self, f):
         self.button.configure(command=f)
 
 
-# MONITOR ===========================================================================================================
+# MONITOR ================================================================
 class monitor:
     def __init__(self, x, y, w, h, title, root) -> None:
         self.x = x
@@ -267,7 +283,7 @@ class monitor:
         self.update(img)
 
 
-# IMAGE SOURCE ================================================================================
+# IMAGE SOURCE ===========================================================
 from threading import Thread
 
 

@@ -213,7 +213,7 @@ import datalogger as saver
 
 def loop():
 
-    # RESIZE CAMERA IMAGE ================================================================
+    # RESIZE CAMERA IMAGE ===============================================
     global img, state, kick_step
     global N, timeout1
 
@@ -234,7 +234,7 @@ def loop():
         campo_mm_y = int(10.0 * PX2CM * img.shape[0])
         gui.tag0.set(f"campo: ({campo_mm_x},{campo_mm_y})mm / {10*PX2CM:0.2f}mm/px")
 
-        # VISION ==============================================================================
+        # VISION ========================================================
         global VS_COLORS, VS_IN, VS_OUT
         global vs, vs_flag_new_data
         vs_flag_new_data = True
@@ -244,23 +244,23 @@ def loop():
         gui.update_tags(vs)
         gui.monitor_colors.update_hsv(monitors["colors"])
         # OUT[ 'monitor_mask' ].update_hsv(tela)
-        # ====================================================================================
+        # ===============================================================
 
-        # SAVE ===============================================================================
+        # SAVE ==========================================================
         gui.save.loop(img)
-        # ====================================================================================
+        # ===============================================================
 
         bench(img) #TODO: ver se precisa
 
-        # MONITORES ==========================================================================
+        # MONITORES =====================================================
         # gui.monitor_camera.update_BGR( img )
 
         # gui.camera.update( data['images']['tela'] )
         # gui.monitor_colors.update_hsv( data['images']['mask'] ) # mudar para update apenas
         # gui.monitor_colors_2.update( data['images']['colors'] )
-        # ====================================================================================
+        # ===============================================================
 
-        # ====================================================================================
+        # ===============================================================
 
         ## [1] ##
         ## Verifica o modo atual e se houve alteração ==============

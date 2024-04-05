@@ -44,19 +44,23 @@ monitor_colors = wg.monitor(530, 250, 250, 200, "Máscaras de Cores", win)
 tag0 = wg.tag(10, 10, win)
 
 # ajustes gerais
-painel_visão = wg.painel("ajustes do sistema de visão", win, x=810, y=10)
+painel_visão = wg.painel("ajustes_da_visão", win, x=810, y=10)
 for ajuste in config.ajustes_visão:
     painel_visão.add_slider(**ajuste)
-
-# ajuste PID
-painel_pid = wg.painel("ajustes do controlador", win, x=810, y=480)
-for ajuste in config.ajustes_pid:
-    painel_pid.add_slider(**ajuste)
+painel_visão.add_button()
 
 # ajustes de cor
-painel_cores = wg.painel("ajustes de cores", win, 810, 245)
-for i, cor in enumerate(config.ajustes_cores):
+painel_cores = wg.painel("ajustes_de_cores", win, 810, 245)
+for cor in config.ajustes_cores:
     painel_cores.add_slider(**cor, MIN=0, MAX=180, unit="º")
+painel_cores.add_button()
+
+# ajuste PID
+painel_pid = wg.painel("ajustes_do_controlador", win, x=810, y=485)
+for ajuste in config.ajustes_pid:
+    painel_pid.add_slider(**ajuste)
+painel_pid.add_button()
+
 
 
 # tag 1
