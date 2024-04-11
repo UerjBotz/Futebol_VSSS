@@ -197,11 +197,14 @@ class painel:
 
     def save_as_json(self):
         from json import dump
-        lista = [{"name": nome, "default": slider.get()}
-                 for nome, slider in self.sliders.items()]
+        estado_atual = [{"name": nome, "default": slider.get()}
+                        for nome, slider in self.sliders.items()]
         caminho = os.path.join("config", f"{self.name}.json")
+        if not os.path.exists(caminho):
+            os.makedirs("config")
+
         with open(caminho, "wt") as f:
-            dump(lista, f, indent=4)
+            dump(estado_atual, f, indent=4)
 
 
 

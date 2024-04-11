@@ -50,7 +50,7 @@ for ajuste in config.ajustes_visão:
 painel_visão.add_button()
 
 # ajustes de cor
-painel_cores = wg.painel("ajustes_de_cores", win, 810, 245)
+painel_cores = wg.painel("ajustes_de_cores", win, x=810, y=245)
 for cor in config.ajustes_cores:
     painel_cores.add_slider(**cor, MIN=0, MAX=180, unit="º")
 painel_cores.add_button()
