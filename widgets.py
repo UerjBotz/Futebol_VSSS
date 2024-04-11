@@ -85,15 +85,15 @@ class window:
 class slider:
     def __init__(
         self,
+        *,
         MIN,
         MAX,
         name,
         main_frame,
-        *,
         row,
-        length,
         default,
         unit,
+        length=200,
         border=3,
         label_width=13
     ) -> None:
@@ -162,7 +162,8 @@ class slider:
 
 
 # PAINEL ============================================================================================================
-class panel:
+class painel:
+
     def __init__(self, name, main_frame, x=0, y=0) -> None:
         self.name = name
         self.frame = ttk.Frame(main_frame, border=4)
@@ -171,25 +172,43 @@ class panel:
         ttk.Label(self.frame, text=name, foreground="white", justify=LEFT).grid(row=0)
         self.sliders = {}
         self.buttons = {}
+        self.num_sliders = 0
+        self.x, self.y = x, y
 
-    def add_slider(self, MIN, MAX, name, *, row, default, unit, length=200):
-        self.sliders[name] = slider(
-            MIN,
-            MAX,
-            name,
-            self.frame,
-            row=row,
-            length=length,
-            default=default,
-            unit=unit,
+    def add_slider(self, **kwargs):
+        if "row" in kwargs:
+            self.num_sliders = kwargs["row"]
+        else:
+            self.num_sliders += 1
+            kwargs["row"] = self.num_sliders
+
+        self.sliders[kwargs["name"]] = slider(
+            main_frame=self.frame,
+            **kwargs
         )
 
+    def add_button(self, **kwargs):
+        x, y = self.x, self.y
+        self.buttons["save"] = button(x, y, name="save", root=self.frame, f=self.save_as_json)
+
     def update_sliders(self):
-        for s in self.sliders:
-            self.sliders[s].update_label()
+        for s in self.sliders.values():
+            s.update_label()
+
+    def save_as_json(self):
+        from json import dump
+        estado_atual = [{"name": nome, "default": slider.get()}
+                        for nome, slider in self.sliders.items()]
+        caminho = os.path.join("config", f"{self.name}.json")
+        if not os.path.exists(caminho):
+            os.makedirs("config")
+
+        with open(caminho, "wt") as f:
+            dump(estado_atual, f, indent=4)
 
 
-# TAG ===========================================================================================================
+
+# TAG ====================================================================
 class tag:
     def __init__(self, x, y, root) -> None:
         self.x = x
@@ -206,9 +225,9 @@ class tag:
         self.label.configure(text=txt)
 
 
-# BUTTON ===========================================================================================================
+# BUTTON =================================================================
 class button:
-    def __init__(self, x, y, name, root) -> None:
+    def __init__(self, x, y, name, root, f=None) -> None:
         self.x = x
         self.y = y
         self.f1 = Font(
@@ -217,11 +236,13 @@ class button:
         self.button = ttk.Button(text=name)
         self.button.place(x=x, y=y)
 
+        if not (f is None): self.button.configure(command=f)
+
     def set_function(self, f):
         self.button.configure(command=f)
 
 
-# MONITOR ===========================================================================================================
+# MONITOR ================================================================
 class monitor:
     def __init__(self, x, y, w, h, title, root) -> None:
         self.x = x
@@ -265,7 +286,7 @@ class monitor:
         self.update(img)
 
 
-# IMAGE SOURCE ================================================================================
+# IMAGE SOURCE ===========================================================
 from threading import Thread
 
 
@@ -598,10 +619,10 @@ class record:
         MenuBtn["menu"] = Menu1
 
         self.voltage = slider(
-            0,
-            100,
-            "step",
-            self.frame2,
+            MIN=0,
+            MAX=100,
+            name="step",
+            main_frame=self.frame2,
             row=0,
             length=50,
             default=50,
@@ -942,14 +963,14 @@ if __name__ == "__main__":
 
     G = window("widgets...", 1200, 500)
 
-    painel = panel("ajustes", G.win, 10, 10)
-    painel.add_slider(0, 255, "S min", 1, default=86)
-    painel.add_slider(10, 200, "H", 2, default=71, unit="cm")
+    painel_teste = painel("ajustes", G.win, 10, 10)
+    painel_teste.add_slider(MIN=0,  MAX=255, name="S min", row=1, default=86)
+    painel_teste.add_slider(MIN=10, MAX=200, name="H", row=2, default=71, unit="cm")
 
-    painel_cores = panel("cores", G.win, 10, 110)
-    painel_cores.add_slider(0, 255, "red", 1, default=55)
-    painel_cores.add_slider(0, 255, "green", 2, default=55)
-    painel_cores.add_slider(0, 255, "blue", 3, default=55)
+    painel_cores = painel("cores", G.win, 10, 110)
+    painel_cores.add_slider(MIN=0, MAX=255, name="red", row=1, default=55)
+    painel_cores.add_slider(MIN=0, MAX=255, name="green", row=2, default=55)
+    painel_cores.add_slider(MIN=0, MAX=255, name="blue", row=3, default=55)
 
     img = np.zeros((300, 300, 3), np.uint8)
     tela = monitor(390, 10, 200, 200, "teste", G.win)
@@ -1020,7 +1041,7 @@ if __name__ == "__main__":
         #        colors_hue=colors_hue
         #    )
 
-        tag0.set(f'tag: {painel.sliders["H"].get()}')
+        tag0.set(f'tag: {painel_teste.sliders["H"].get()}')
 
         camera.read()
 
