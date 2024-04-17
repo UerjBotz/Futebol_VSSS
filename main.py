@@ -2,15 +2,17 @@ import os
 import time
 from cmath import polar, phase
 
-from vision_thread import vision, complex_to_xy
 import cv2
 import numpy as np
 from math import floor
+
 import gui
 from controle import new_pid as pid
+from vision_thread import vision, complex_to_xy, vision_conf
 
 
-##########################################################
+#TODO: from controle import ... lá embaixo dentro de código (tirar)
+
 
 PX2CM = 0.1  # conversão
 img = np.zeros((10, 10, 3), np.uint8)  # imagem
@@ -25,19 +27,12 @@ os.chdir(path)
 bot_control_lin = pid()
 bot_control_ang = pid()
 
-from enum import Enum, auto
-class Strat(Enum):
-    CENTRO = auto()
-    kick   = auto()
-    v_vick = auto()
-    REPELE = auto()
-    VECT   = auto()
-    STOP   = auto()
-
 LAST_MODE = ""
 vs_flag_new_data = False
 vs = {}
-VS_COLORS = VS_IN = VS_OUT = 0
+
+vs_conf: vision_conf = 0
+_VS_OUT: dict = 0
 
 
 def constrain_angle(x, Min=-np.pi, Max=np.pi):
@@ -213,7 +208,7 @@ import datalogger as saver
 
 def loop():
 
-    # RESIZE CAMERA IMAGE ================================================================
+    # RESIZE CAMERA IMAGE ===============================================
     global img, state, kick_step
     global N, timeout1
 
@@ -234,33 +229,30 @@ def loop():
         campo_mm_y = int(10.0 * PX2CM * img.shape[0])
         gui.tag0.set(f"campo: ({campo_mm_x},{campo_mm_y})mm / {10*PX2CM:0.2f}mm/px")
 
-        # VISION ==============================================================================
-        global VS_COLORS, VS_IN, VS_OUT
+        # VISION ========================================================
+        global vs_conf, _VS_OUT
         global vs, vs_flag_new_data
         vs_flag_new_data = True
         tela = img.copy()
-        # vs, monitors = vision(tela, VS_COLORS, VS_IN, VS_OUT, 10*PX2CM )
-        vs, monitors = vision(tela, VS_COLORS, VS_IN, 10 * PX2CM)
+        vs, monitors = vision(tela, vs_conf, 10 * PX2CM)
         gui.update_tags(vs)
         gui.monitor_colors.update_hsv(monitors["colors"])
         # OUT[ 'monitor_mask' ].update_hsv(tela)
-        # ====================================================================================
+        # ===============================================================
 
-        # SAVE ===============================================================================
+        # SAVE ==========================================================
         gui.save.loop(img)
-        # ====================================================================================
+        # ===============================================================
 
         bench(img) #TODO: ver se precisa
 
-        # MONITORES ==========================================================================
+        # MONITORES =====================================================
         # gui.monitor_camera.update_BGR( img )
 
         # gui.camera.update( data['images']['tela'] )
         # gui.monitor_colors.update_hsv( data['images']['mask'] ) # mudar para update apenas
         # gui.monitor_colors_2.update( data['images']['colors'] )
-        # ====================================================================================
-
-        # ====================================================================================
+        # ===============================================================
 
         ## [1] ##
         ## Verifica o modo atual e se houve alteração ==============
@@ -278,7 +270,7 @@ def loop():
         ## =========================================================
 
         ## [2] ##
-        ## atuaiza os parametro de controle ============================
+        ## atualiza os parametro de controle ============================
         # gui.painel_pid.sliders['Pg'].set()
 
         # bot_control.kp = gui.painel_pid.sliders['Pl'].get()
@@ -291,7 +283,7 @@ def loop():
         ## ==============================================================
 
         ## [3] ##
-        ## Input vision data ================================================
+        ## Input vision data ============================================
         p, theta, bot_ok = get_bot_ref()
         ball, ball_ok = get_ball()
         centro = int(campo_mm_x / 2) + 1j * int(campo_mm_y / 2)
@@ -313,12 +305,12 @@ def loop():
             plot_x(monitors["vision"], ball)  # marca um x na posição da bola
         plot_x(monitors["vision"], centro)  # marca um x na posição do centro
 
-        ## Input vision data ================================================
+        ## Input vision data ============================================
 
         ## [4] ##
         x = int(p.real)  # ??
 
-        ## Controle do robô ===================================================
+        ## Controle do robô =============================================
         if bot_ok: # TODO: tirar esse if e ver oqq esse bot_ok é
 
             plot_x(monitors["vision"], p, color=(110, 255, 255))
@@ -605,15 +597,11 @@ def loop():
 
 
 def gui_loop():
+    global vs_conf, _VS_OUT
 
-    # LOOP ===============================================================================
     gui.win.after(300, gui_loop)
-    # ====================================================================================
 
-    global VS_COLORS, VS_IN, VS_OUT
-    # update inputs of IHM ===============================================================
-    VS_COLORS, VS_IN, VS_OUT = gui.loop()
-    # ====================================================================================
+    vs_conf, _VS_OUT = gui.loop()
 
 
 gui_loop()
@@ -623,4 +611,3 @@ gui.win.mainloop()
 
 gui.camera.close()
 
-# ========================================================================================
