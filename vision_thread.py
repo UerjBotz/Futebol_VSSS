@@ -2,9 +2,10 @@ import os
 import cv2
 import time
 import numpy as np
+
 from cmath import polar
 from threading import Thread
-
+from dataclasses import dataclass
 
 def complex_to_xy(cp):
     return np.array([cp.real, cp.imag], np.int32)
@@ -173,7 +174,6 @@ def inrange(A, h_min, h_max, s_min, v_min):
     )
     return np.array(C, np.uint8)
 
-from dataclasses import dataclass
 @dataclass
 class vision_conf():
     v_min:    int
@@ -192,20 +192,25 @@ class vision_conf():
             colors = vs_colors,
         )
 
-#@dataclass
-#class bot_info():
-#    id:          int
-#    pos:         tuple[float,float] # TODO: ver se realmente tá certo
-#    orientation: float              # TODO: ver se realmente tá certo
-#    dimension:   int                # TODO: ver se realmente tá certo
-#    vector:      tuple[float,float] # TODO: ver se realmente tá certo
-#    colors:      tuple[str, str]    # TODO: ver se realmente tá certo
-#
-#@dataclass
-#class ball_info():
-#    ok:        bool
-#    pos:       tuple[float,float] # TODO: ver se realmente tá certo
-#    dimension: int                # TODO: ver se realmente tá certo
+@dataclass
+class bot_info():
+    id:          int
+    pos:         tuple[float,float] # TODO: ver se realmente tá certo
+    orientation: float              # TODO: ver se realmente tá certo
+    dimension:   int                # TODO: ver se realmente tá certo
+    vector:      tuple[float,float] # TODO: ver se realmente tá certo
+    colors:      tuple[str, str]    # TODO: ver se realmente tá certo
+
+@dataclass
+class ball_info():
+    ok:        bool
+    pos:       tuple[float,float] # TODO: ver se realmente tá certo
+    dimension: int                # TODO: ver se realmente tá certo
+
+@dataclass
+class vision_info(): #TODO: default factory (todas as instâncias com valor padrão agora apontam pros mesmos objetos)
+    ball: ball_info = ball(False, 0, 0)
+    teams: dict[str, dict[int, bot_info]] = {}
 
 
 def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
@@ -279,7 +284,7 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
     # ORIENTAÇÃO GLOBAL ROBÔS E BOLA  -----------------------------------
     # -------------------------------------------------------------------
 
-    default_ball = {"ok": False, "pos": 0, "dimension": 0}
+    #default_ball = {"ok": False, "pos": 0, "dimension": 0}
 
     #default_bot = {
     #    "id": 0,
@@ -290,11 +295,11 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
     #    "colors": ["orange", "orange"],
     #}
 
-    game = {"ball": default_ball, "team_blue": {}, "team_yellow": {}}
+    game = vision_info()
 
     # Bola --------------------------------------------------------------
     if len(data_center["orange"]):
-        game["ball"] = {
+        game.ball = {
             "ok": True,
             "pos": data_center["orange"][0] * conv,
             "dimension": data_dimension["orange"][0] * conv,
@@ -341,8 +346,8 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
                 gen_id += 1
 
             # fmt: off
-            #game[team_key][id] = default_bot.copy().update({
-            game[team_key][id] = {
+            #game.teams[team_key][id] = default_bot.copy().update({
+            game.teams[team_key][id] = {
                 "id":          id,
                 "pos":         center*conv,
                 "colors":      tag,
@@ -351,7 +356,7 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
                 "dimension":   data_dimension[team][i] * conv,
             }
             # fmt: on
-        game[team_key] = sort_bots(game[team_key]) # TODO: esse sort_bots provavelmente deveria ser sorted([bot for id, bot in game[team_key].items()], key=lambda bot: bot["id"])
+        game.teams[team_key] = sort_bots(game.teams[team_key]) # TODO: esse sort_bots provavelmente deveria ser sorted([bot for id, bot in game.teams[team_key].items()], key=lambda bot: bot["id"])
     # -------------------------------------------------------------------
 
     # ATUALIZA OS MONITORES ---------------------------------------------
