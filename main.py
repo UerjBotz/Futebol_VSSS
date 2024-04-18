@@ -8,7 +8,7 @@ from math import floor
 
 import gui
 from controle import new_pid as pid
-from vision_thread import vision, complex_to_xy, vision_conf
+from vision_thread import vision, complex_to_xy, vision_conf, vision_info
 
 
 #TODO: from controle import ... lá embaixo dentro de código (tirar)
@@ -29,10 +29,10 @@ bot_control_ang = pid()
 
 LAST_MODE = ""
 vs_flag_new_data = False
-vs = {}
+vs_info: vision_info = vision_info()
 
-vs_conf: vision_conf = 0
-_VS_OUT: dict = 0
+vs_conf: vision_conf = vision_conf(0,0,0,0,{})
+_VS_OUT: dict = {}
 
 
 def constrain_angle(x, Min=-np.pi, Max=np.pi):
@@ -94,10 +94,10 @@ def plot_arrow(img, center, v, hue=0):
 
 
 def get_ball():
-    return (vs["ball"]["pos"], vs["ball"]["ok"])
+    return (vs_info.ball.pos, vs_info.ball.ok)
 
 
-def get_bot_ref():
+def get_bot_ref(): # TODO: time hardcoded
 
     ID = 24
     TEAM = "team_yellow"
@@ -106,15 +106,15 @@ def get_bot_ref():
 
     p = theta = 0
 
-    # if( ID in vs[TEAM] ):
-    if len(vs[TEAM]) > 0:
-        ID = list(vs[TEAM].keys())[0]
-        # if( vs['ball']['ok'] ):
-        #    y_set = int(vs['ball']['pos'].imag)
-        if len(vs[MARK]) > 0:
-            ID_M = list(vs[MARK].keys())[0]
-        p = vs[TEAM][ID]["pos"]
-        theta = vs[TEAM][ID]["orientation"]
+    # if( ID in vs_info.teams[TEAM] ):
+    if len(vs_info.teams[TEAM]) > 0:
+        ID = list(vs_info.teams[TEAM].keys())[0]
+        # if( vs_info.teams['ball']['ok'] ):
+        #    y_set = int(vs_info.teams['ball']['pos'].imag)
+        if len(vs_info.teams[MARK]) > 0:
+            ID_M = list(vs_info.teams[MARK].keys())[0]
+        p = vs_info.teams[TEAM][ID].pos
+        theta = vs_info.teams[TEAM][ID].orientation
         ok = True
 
     return (p, theta, ok)
@@ -128,10 +128,10 @@ def get_bot_blue():
     ok = False
     p = theta = 0
 
-    if len(vs[TEAM]) > 0:
-        ID = list(vs[TEAM].keys())[0]
-        p = vs[TEAM][ID]["pos"]
-        theta = vs[TEAM][ID]["orientation"]
+    if len(vs_info.teams[TEAM]) > 0:
+        ID = list(vs_info.teams[TEAM].keys())[0]
+        p = vs_info.teams[TEAM][ID]["pos"]
+        theta = vs_info.teams[TEAM][ID]["orientation"]
         ok = True
 
     return (p, theta, ok)
@@ -145,8 +145,8 @@ def step_callback():
     global rec_data
     if gui.rec_step.can_write(True):
 
-        global vs, vs_flag_new_data
-        vs_data = vs
+        global vs_info, vs_flag_new_data
+        vs_data = vs_info
 
         if vs_flag_new_data:
             vs_flag_new_data = False
@@ -155,10 +155,10 @@ def step_callback():
                 v = int(10 * gui.rec_step.voltage.get())
                 # gui.serial.tx.send_ch_333( [ v,v, v,v, v,v ] )
 
-            if len(vs_data["team_yellow"]) > 0:
-                ID = list(vs_data["team_yellow"].keys())[0]
-                x = int(vs_data["team_yellow"][ID]["pos"].real)
-                y = int(vs_data["team_yellow"][ID]["pos"].imag)
+            if len(vs_data.teams["team_yellow"]) > 0:
+                ID = list(vs_data.teams["team_yellow"].keys())[0]
+                x = int(vs_data.teams["team_yellow"][ID].pos.real)
+                y = int(vs_data.teams["team_yellow"][ID].pos.imag)
                 rec_data = [x, y]
 
             gui.rec_step.save_line(rec_data)
@@ -231,11 +231,11 @@ def loop():
 
         # VISION ========================================================
         global vs_conf, _VS_OUT
-        global vs, vs_flag_new_data
+        global vs_info, vs_flag_new_data
         vs_flag_new_data = True
         tela = img.copy()
-        vs, monitors = vision(tela, vs_conf, 10 * PX2CM)
-        gui.update_tags(vs)
+        vs_info, monitors = vision(tela, vs_conf, 10 * PX2CM)
+        gui.update_tags(vs_info)
         gui.monitor_colors.update_hsv(monitors["colors"])
         # OUT[ 'monitor_mask' ].update_hsv(tela)
         # ===============================================================
@@ -497,10 +497,10 @@ def loop():
                     f"{ int((erro_g)*180.0/np.pi) }",
                     (0, 255, 255),
                 )
-                if len(vs[TEAM]) > 0:
-                    for ID in vs[TEAM]:
-                        pb = vs[TEAM][ID]["pos"]
-                        print(f"vs[TEAM][{ID}][pos] = {pb}")
+                if len(vs_info.teams[TEAM]) > 0:
+                    for ID in vs_info.teams[TEAM]:
+                        pb = vs_info.teams[TEAM][ID]["pos"]
+                        print(f"vs_info.teams[TEAM][{ID}][pos] = {pb}")
                         if abs(p - pb) < 500:
                             f = get_force(-Q_obs, 1, 0, pb - p)
                             F += f

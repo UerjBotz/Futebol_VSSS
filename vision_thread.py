@@ -5,7 +5,7 @@ import numpy as np
 
 from cmath import polar
 from threading import Thread
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 def complex_to_xy(cp):
     return np.array([cp.real, cp.imag], np.int32)
@@ -96,8 +96,8 @@ def match_contours(contours, shape="rect", tela=None): #TODO: tipos (principalme
 
 
 def link_0(
-    R, points, colors, v, dimension, tag=["black", "black"], tela=None, delta=10
-):
+    R, points, colors, v, dimension, tag=("black", "black"), tela=None, delta=10
+) -> tuple[complex, tuple[str,str], complex]: # TODO: nome horrível, mudar
 
     L_ref = 32.5 + 17.5j
     k = (dimension.real / 65 + dimension.imag / 30) / 2
@@ -148,9 +148,9 @@ def link_0(
             v = center - R
             v = v / abs(v)
             if (p.real > 0) == (p.imag > 0):
-                tag = [c1, c2]
+                tag = (c1, c2)
             else:
-                tag = [c2, c1]
+                tag = (c2, c1)
             break
 
     cv2.circle(tela, complex_to_xy(center), 3, (0, 255, 255), 2)
@@ -180,7 +180,7 @@ class vision_conf():
     s_min:    int
     area_min: int
     delta:    int
-    colors:   dict[str, int]
+    colors:   dict[str, dict[str, int]] # TODO: melhorar isso
     
     @staticmethod
     def from_dict(vs_in, vs_colors):
@@ -192,28 +192,32 @@ class vision_conf():
             colors = vs_colors,
         )
 
-@dataclass
-class bot_info():
-    id:          int
-    pos:         tuple[float,float] # TODO: ver se realmente tá certo
-    orientation: float              # TODO: ver se realmente tá certo
-    dimension:   int                # TODO: ver se realmente tá certo
-    vector:      tuple[float,float] # TODO: ver se realmente tá certo
-    colors:      tuple[str, str]    # TODO: ver se realmente tá certo
-
-@dataclass
+@dataclass(kw_only=True)
 class ball_info():
     ok:        bool
     pos:       tuple[float,float] # TODO: ver se realmente tá certo
     dimension: int                # TODO: ver se realmente tá certo
 
 @dataclass
-class vision_info(): #TODO: default factory (todas as instâncias com valor padrão agora apontam pros mesmos objetos)
-    ball: ball_info = ball(False, 0, 0)
-    teams: dict[str, dict[int, bot_info]] = {}
+class bot_info():
+    id:          int
+    pos:         complex
+    orientation: float
+    dimension:   complex
+    vector:      complex
+    colors:      tuple[str, str] # TODO: na verdade costuma ser uma lista (melhor mudar nos outros lugares do que aqui
+
+@dataclass
+class vision_info():
+    ball:  ball_info = field(
+        default_factory=lambda: ball_info(ok=False, pos=0, dimension=0)
+    )
+    teams: dict[str, dict[int, bot_info]] = field(
+        default_factory=lambda: dict(team_yellow={}, team_blue={})
+    )
 
 
-def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
+def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[vision_info, dict]:
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # -------------------------------------------------------------------
@@ -284,26 +288,15 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
     # ORIENTAÇÃO GLOBAL ROBÔS E BOLA  -----------------------------------
     # -------------------------------------------------------------------
 
-    #default_ball = {"ok": False, "pos": 0, "dimension": 0}
-
-    #default_bot = {
-    #    "id": 0,
-    #    "pos": 0,
-    #    "orientation": 0,
-    #    "dimension": 0,
-    #    "vector": 0,
-    #    "colors": ["orange", "orange"],
-    #}
-
     game = vision_info()
 
     # Bola --------------------------------------------------------------
     if len(data_center["orange"]):
-        game.ball = {
-            "ok": True,
-            "pos": data_center["orange"][0] * conv,
-            "dimension": data_dimension["orange"][0] * conv,
-        }
+        game.ball = ball_info(
+            ok=True,
+            pos=data_center["orange"][0]*conv,
+            dimension=data_dimension["orange"][0]*conv,
+        )
     # -------------------------------------------------------------------
 
     # TRANSFORMA EM NUMPY ARRAY PARA FACILITAR O PROCESSAMENTO ----------
@@ -325,7 +318,7 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
 
     # SEGMENTAÇÕES DOS ROBÔS UM DE CADA VEZ -----------------------------
     for team in ("darkblue", "yellow"):
-        gen_id = 50 #TODO: oqq é isso
+        gen_id = 50 #TODO: oqq é isso (generated id?)
         team_key = "team_yellow" if team == "yellow" else "team_blue"
 
         for i, ref in enumerate(data_center[team][:3]):
@@ -335,27 +328,26 @@ def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[dict, dict]:
                 SEG_COLORS,
                 data_vector[team][i],
                 data_dimension[team][i],
-                tag=[team, team],
+                tag=(team, team),
                 tela=tela,
                 delta=cfg.delta,
             )
-
+            
+            # TODO: melhorar essa partezinha
             id = 10 * tag2number[tag[0]] + tag2number[tag[1]]
-            if id == 0:
+            if id == 0: 
                 id = gen_id
                 gen_id += 1
 
-            # fmt: off
-            #game.teams[team_key][id] = default_bot.copy().update({
-            game.teams[team_key][id] = {
-                "id":          id,
-                "pos":         center*conv,
-                "colors":      tag,
-                "orientation": polar(v)[1],
-                "vector":      v,
-                "dimension":   data_dimension[team][i] * conv,
-            }
-            # fmt: on
+            game.teams[team_key][id] = bot_info(
+                id=id,
+                pos=center*conv,
+                colors=tag,
+                orientation=polar(v)[1],
+                vector=v,
+                dimension=data_dimension[team][i] * conv,
+            )
+
         game.teams[team_key] = sort_bots(game.teams[team_key]) # TODO: esse sort_bots provavelmente deveria ser sorted([bot for id, bot in game.teams[team_key].items()], key=lambda bot: bot["id"])
     # -------------------------------------------------------------------
 

@@ -13,6 +13,7 @@ import numpy as np
 from PIL import Image, ImageTk
 
 import widgets as wg
+from vision_thread import vision_info, bot_info
 
 FILE = __file__
 path = os.path.dirname(FILE)
@@ -174,28 +175,25 @@ def loop() -> tuple[dict, dict, dict]: # TODO: mudar nome para update ou tick al
     return (vision_conf.from_dict(VS_IN, VS_COLORS), _VS_OUT)
 
 
-def update_tags(data):
+def update_tags(data: vision_info):
     # ATUALIZA AS TAGS --------------------------------------------------
-    ball.update_pack(data["ball"])
-    for team in ["darkblue", "yellow"]:
-        if team == "yellow":
-            team_key = "team_yellow"
-        else:
-            team_key = "team_blue"
-        keys = list(data[team_key].keys())
-        bot_detection = {
-            "id": 0,
-            "pos": 0,
-            "orientation": 0,
-            "dimension": 0,
-            "vector": 0,
-            "colors": ["orange", "orange"],
-        }
+    ball.update_pack(data.ball)
+    for team, team_key in (("darkblue", "team_blue"),
+                           ("yellow", "team_yellow")):
+        keys = list(data.teams[team_key].keys())
+        default_bot = bot_info(
+            id=0,
+            pos=0,
+            orientation=0,
+            dimension=0,
+            vector=0,
+            colors=("orange", "orange"),
+        )
         for i in range(3):
-            if len(data[team_key]) > i:
-                bot[team][i].update_pack(data[team_key][keys[i]])
+            if len(data.teams[team_key]) > i:
+                bot[team][i].update_pack(data.teams[team_key][keys[i]])
             else:
-                bot[team][i].update_pack(bot_detection)
+                bot[team][i].update_pack(default_bot)
     # -------------------------------------------------------------------
 
 
