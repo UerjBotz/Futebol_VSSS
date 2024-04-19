@@ -12,6 +12,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageOps
 
+from vision_thread import bot_info, ball_info
+
 FILE = __file__
 local_path = os.path.dirname(FILE)
 
@@ -818,13 +820,13 @@ class bot_tag:
 
     def update_pack(self, pack):
         self.update(
-            pack["pos"].real,
-            pack["pos"].imag,
-            pack["orientation"] * (180 / np.pi),
-            pack["dimension"].real,
-            pack["dimension"].imag,
-            pack["colors"],
-            pack["id"],
+            pack.pos.real,
+            pack.pos.imag,
+            pack.orientation*(180 / np.pi),
+            pack.dimension.real,
+            pack.dimension.imag,
+            pack.colors,
+            pack.id,
         )
 
 
@@ -875,8 +877,8 @@ class ball_tag:
         self.label_pos.configure(text=f"(x,y): ({int(x)},{int(y)})")
         self.label_R.configure(text=f"(R): ({int(R)})")
 
-    def update_pack(self, pack):
-        self.update(pack["pos"].real, pack["pos"].imag, pack["dimension"].real)
+    def update_pack(self, pack: bot_info | ball_info):
+        self.update(pack.pos.real, pack.pos.imag, pack.dimension.real)
 
 
 class mode_selection:
@@ -957,6 +959,7 @@ class mode_selection:
 
 
 # FOR TESTS ==============================================================
+"""
 if __name__ == "__main__":
 
     print("FILE -> ", FILE, "\nPATH:", local_path)
@@ -1050,3 +1053,4 @@ if __name__ == "__main__":
     display()
     G.win.mainloop()
     camera.close()
+"""

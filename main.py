@@ -2,15 +2,17 @@ import os
 import time
 from cmath import polar, phase
 
-from vision_thread import vision, complex_to_xy
 import cv2
 import numpy as np
 from math import floor
+
 import gui
 from controle import new_pid as pid
+from vision_thread import vision, complex_to_xy, vision_conf, vision_info
 
 
-##########################################################
+#TODO: from controle import ... lá embaixo dentro de código (tirar)
+
 
 PX2CM = 0.1  # conversão
 img = np.zeros((10, 10, 3), np.uint8)  # imagem
@@ -25,19 +27,12 @@ os.chdir(path)
 bot_control_lin = pid()
 bot_control_ang = pid()
 
-from enum import Enum, auto
-class Strat(Enum):
-    CENTRO = auto()
-    kick   = auto()
-    v_vick = auto()
-    REPELE = auto()
-    VECT   = auto()
-    STOP   = auto()
-
 LAST_MODE = ""
 vs_flag_new_data = False
-vs = {}
-VS_COLORS = VS_IN = VS_OUT = 0
+vs_info: vision_info = vision_info()
+
+vs_conf: vision_conf = vision_conf(0,0,0,0,{})
+_VS_OUT: dict = {}
 
 
 def constrain_angle(x, Min=-np.pi, Max=np.pi):
@@ -99,10 +94,10 @@ def plot_arrow(img, center, v, hue=0):
 
 
 def get_ball():
-    return (vs["ball"]["pos"], vs["ball"]["ok"])
+    return (vs_info.ball.pos, vs_info.ball.ok)
 
 
-def get_bot_ref():
+def get_bot_ref(): # TODO: time hardcoded
 
     ID = 24
     TEAM = "team_yellow"
@@ -111,15 +106,15 @@ def get_bot_ref():
 
     p = theta = 0
 
-    # if( ID in vs[TEAM] ):
-    if len(vs[TEAM]) > 0:
-        ID = list(vs[TEAM].keys())[0]
-        # if( vs['ball']['ok'] ):
-        #    y_set = int(vs['ball']['pos'].imag)
-        if len(vs[MARK]) > 0:
-            ID_M = list(vs[MARK].keys())[0]
-        p = vs[TEAM][ID]["pos"]
-        theta = vs[TEAM][ID]["orientation"]
+    # if( ID in vs_info.teams[TEAM] ):
+    if len(vs_info.teams[TEAM]) > 0:
+        ID = list(vs_info.teams[TEAM].keys())[0]
+        # if( vs_info.teams['ball']['ok'] ):
+        #    y_set = int(vs_info.teams['ball']['pos'].imag)
+        if len(vs_info.teams[MARK]) > 0:
+            ID_M = list(vs_info.teams[MARK].keys())[0]
+        p = vs_info.teams[TEAM][ID].pos
+        theta = vs_info.teams[TEAM][ID].orientation
         ok = True
 
     return (p, theta, ok)
@@ -133,10 +128,10 @@ def get_bot_blue():
     ok = False
     p = theta = 0
 
-    if len(vs[TEAM]) > 0:
-        ID = list(vs[TEAM].keys())[0]
-        p = vs[TEAM][ID]["pos"]
-        theta = vs[TEAM][ID]["orientation"]
+    if len(vs_info.teams[TEAM]) > 0:
+        ID = list(vs_info.teams[TEAM].keys())[0]
+        p = vs_info.teams[TEAM][ID]["pos"]
+        theta = vs_info.teams[TEAM][ID]["orientation"]
         ok = True
 
     return (p, theta, ok)
@@ -150,8 +145,8 @@ def step_callback():
     global rec_data
     if gui.rec_step.can_write(True):
 
-        global vs, vs_flag_new_data
-        vs_data = vs
+        global vs_info, vs_flag_new_data
+        vs_data = vs_info
 
         if vs_flag_new_data:
             vs_flag_new_data = False
@@ -160,10 +155,10 @@ def step_callback():
                 v = int(10 * gui.rec_step.voltage.get())
                 # gui.serial.tx.send_ch_333( [ v,v, v,v, v,v ] )
 
-            if len(vs_data["team_yellow"]) > 0:
-                ID = list(vs_data["team_yellow"].keys())[0]
-                x = int(vs_data["team_yellow"][ID]["pos"].real)
-                y = int(vs_data["team_yellow"][ID]["pos"].imag)
+            if len(vs_data.teams["team_yellow"]) > 0:
+                ID = list(vs_data.teams["team_yellow"].keys())[0]
+                x = int(vs_data.teams["team_yellow"][ID].pos.real)
+                y = int(vs_data.teams["team_yellow"][ID].pos.imag)
                 rec_data = [x, y]
 
             gui.rec_step.save_line(rec_data)
@@ -235,13 +230,12 @@ def loop():
         gui.tag0.set(f"campo: ({campo_mm_x},{campo_mm_y})mm / {10*PX2CM:0.2f}mm/px")
 
         # VISION ========================================================
-        global VS_COLORS, VS_IN, VS_OUT
-        global vs, vs_flag_new_data
+        global vs_conf, _VS_OUT
+        global vs_info, vs_flag_new_data
         vs_flag_new_data = True
         tela = img.copy()
-        # vs, monitors = vision(tela, VS_COLORS, VS_IN, VS_OUT, 10*PX2CM )
-        vs, monitors = vision(tela, VS_COLORS, VS_IN, 10 * PX2CM)
-        gui.update_tags(vs)
+        vs_info, monitors = vision(tela, vs_conf, 10 * PX2CM)
+        gui.update_tags(vs_info)
         gui.monitor_colors.update_hsv(monitors["colors"])
         # OUT[ 'monitor_mask' ].update_hsv(tela)
         # ===============================================================
@@ -260,8 +254,6 @@ def loop():
         # gui.monitor_colors_2.update( data['images']['colors'] )
         # ===============================================================
 
-        # ===============================================================
-
         ## [1] ##
         ## Verifica o modo atual e se houve alteração ==============
         global LAST_MODE
@@ -278,7 +270,7 @@ def loop():
         ## =========================================================
 
         ## [2] ##
-        ## atuaiza os parametro de controle ============================
+        ## atualiza os parâmetros de controle ============================
         # gui.painel_pid.sliders['Pg'].set()
 
         # bot_control.kp = gui.painel_pid.sliders['Pl'].get()
@@ -291,7 +283,7 @@ def loop():
         ## ==============================================================
 
         ## [3] ##
-        ## Input vision data ================================================
+        ## Input vision data ============================================
         p, theta, bot_ok = get_bot_ref()
         ball, ball_ok = get_ball()
         centro = int(campo_mm_x / 2) + 1j * int(campo_mm_y / 2)
@@ -313,12 +305,12 @@ def loop():
             plot_x(monitors["vision"], ball)  # marca um x na posição da bola
         plot_x(monitors["vision"], centro)  # marca um x na posição do centro
 
-        ## Input vision data ================================================
+        ## Input vision data ============================================
 
         ## [4] ##
         x = int(p.real)  # ??
 
-        ## Controle do robô ===================================================
+        ## Controle do robô =============================================
         if bot_ok: # TODO: tirar esse if e ver oqq esse bot_ok é
 
             plot_x(monitors["vision"], p, color=(110, 255, 255))
@@ -505,10 +497,10 @@ def loop():
                     f"{ int((erro_g)*180.0/np.pi) }",
                     (0, 255, 255),
                 )
-                if len(vs[TEAM]) > 0:
-                    for ID in vs[TEAM]:
-                        pb = vs[TEAM][ID]["pos"]
-                        print(f"vs[TEAM][{ID}][pos] = {pb}")
+                if len(vs_info.teams[TEAM]) > 0:
+                    for ID in vs_info.teams[TEAM]:
+                        pb = vs_info.teams[TEAM][ID]["pos"]
+                        print(f"vs_info.teams[TEAM][{ID}][pos] = {pb}")
                         if abs(p - pb) < 500:
                             f = get_force(-Q_obs, 1, 0, pb - p)
                             F += f
@@ -605,15 +597,11 @@ def loop():
 
 
 def gui_loop():
+    global vs_conf, _VS_OUT
 
-    # LOOP ===============================================================================
     gui.win.after(300, gui_loop)
-    # ====================================================================================
 
-    global VS_COLORS, VS_IN, VS_OUT
-    # update inputs of IHM ===============================================================
-    VS_COLORS, VS_IN, VS_OUT = gui.loop()
-    # ====================================================================================
+    vs_conf, _VS_OUT = gui.loop()
 
 
 gui_loop()
@@ -623,4 +611,3 @@ gui.win.mainloop()
 
 gui.camera.close()
 
-# ========================================================================================

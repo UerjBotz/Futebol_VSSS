@@ -14,17 +14,19 @@ from PIL import Image, ImageTk
 
 import config
 import widgets as wg
+from vision_thread import vision_info, bot_info, vision_conf
 
 FILE = __file__
 path = os.path.dirname(FILE)
 os.chdir(path)
 
-# INICIA A JANELA ===================================================
+# INICIA A JANELA =========================================================
 window_gui = wg.window(
     "Visão do Futebol VSSS da UERJBotz", ico=os.path.join(path, "images/icon.png"), height=720
 )
 win = window_gui.win
-# ===================================================================
+# =========================================================================
+
 
 
 # camera
@@ -69,11 +71,15 @@ tag_pid = wg.tag(810, 480, win)
 # ball
 ball = wg.ball_tag(win, 10, 625, 65)
 
+# fmt: off
 # tags dos bots
 bot = {
-    "darkblue": [wg.bot_tag(win, 235 + i * 195, 550, 60, "darkblue") for i in range(3)],
-    "yellow":   [wg.bot_tag(win, 235 + i * 195, 630, 60, "yellow") for i in range(3)],
+    "darkblue": [wg.bot_tag(win, 235 + i * 195, 550, 60, "darkblue")
+                                         for i in range(3)],
+    "yellow":   [wg.bot_tag(win, 235 + i * 195, 630, 60, "yellow")
+                                         for i in range(3)],
 }
+# fmt: on
 
 mode = wg.mode_selection( # TODO: mudar pra mode_wg ou strat_wg
     win,
@@ -101,7 +107,7 @@ def loop() -> tuple[dict, dict, dict]: # TODO: mudar nome para update ou tick al
     painel_pid.update_sliders()
     rec_step.voltage.update_label()
 
-    # UPDATE COLORS =================================================
+    # UPDATE COLORS =====================================================
     color_hue_min = [painel_cores.sliders[c].get() for c in painel_cores.sliders]
     color_hue_max = []
     color_hue_mean = []
@@ -117,21 +123,26 @@ def loop() -> tuple[dict, dict, dict]: # TODO: mudar nome para update ou tick al
 
     VS_COLORS = {
         "MEAN": {
-            color: color_hue_mean[i] for i, color in enumerate(painel_cores.sliders)
-        }, "MIN": {
-            color: color_hue_min[i] for i, color in enumerate(painel_cores.sliders)
-        }, "MAX": {
-            color: color_hue_max[i] for i, color in enumerate(painel_cores.sliders)
+            color: color_hue_mean[i]
+                   for i, color in enumerate(painel_cores.sliders)
+        },
+        "MIN": {
+            color: color_hue_min[i]
+                   for i, color in enumerate(painel_cores.sliders)
+        },
+        "MAX": {
+            color: color_hue_max[i]
+                   for i, color in enumerate(painel_cores.sliders)
         },
     }
-    # UPDATE COLORS =================================================
+    # UPDATE COLORS =====================================================
 
     for i, color in enumerate(painel_cores.sliders):
         painel_cores.sliders[color].color(wg.hue2ttkColor(VS_COLORS["MEAN"][color]))
 
     VS_IN = {ajuste: painel_visão.sliders[ajuste].get() for ajuste in painel_visão.sliders}
 
-    VS_OUT = {
+    _VS_OUT = {
         "monitor_camera": monitor_camera,
         "monitor_color":  monitor_colors,
         "monitor_mask":   monitor_mask,
@@ -140,33 +151,36 @@ def loop() -> tuple[dict, dict, dict]: # TODO: mudar nome para update ou tick al
         "tagHZ": tagHZ,
     }
 
-    return (VS_COLORS, VS_IN, VS_OUT)
+    return (vision_conf.from_dict(VS_IN, VS_COLORS), _VS_OUT)
 
 
-def update_tags(data):
-    ball.update_pack(data["ball"])
-    for team in "darkblue", "yellow":
-        team_key = "team_yellow" if team == "yellow" else "team_blue"
-
-        keys = list(data[team_key].keys())
-        bot_detection = {
-            "id":  0,
-            "pos": 0,
-            "orientation": 0,
-            "dimension":   0,
-            "vector": 0,
-            "colors": ["orange", "orange"],
-        }
+def update_tags(data: vision_info):
+    # ATUALIZA AS TAGS --------------------------------------------------
+    ball.update_pack(data.ball)
+    for team, team_key in (("darkblue", "team_blue"),
+                           ("yellow", "team_yellow")):
+        keys = list(data.teams[team_key].keys())
+        default_bot = bot_info(
+            id=0,
+            pos=0,
+            orientation=0,
+            dimension=0,
+            vector=0,
+            colors=("orange", "orange"),
+        )
         for i in range(3):
-            if len(data[team_key]) > i:
-                bot[team][i].update_pack(data[team_key][keys[i]])
+            if len(data.teams[team_key]) > i:
+                bot[team][i].update_pack(data.teams[team_key][keys[i]])
             else:
-                bot[team][i].update_pack(bot_detection)
+                bot[team][i].update_pack(default_bot)
+    # -------------------------------------------------------------------
 
 
-# FOR TESTS =========================================================
+# FOR TESTS ==============================================================
+"""
 if __name__ == "__main__":
     print("FILE -> ", FILE, "\nPATH:", path)
     monitor_camera.update_BGR(camera.read())
     loop()
     win.mainloop()
+"""

@@ -2,9 +2,10 @@ import os
 import cv2
 import time
 import numpy as np
+
 from cmath import polar
 from threading import Thread
-
+from dataclasses import dataclass, field
 
 def complex_to_xy(cp):
     return np.array([cp.real, cp.imag], np.int32)
@@ -67,7 +68,7 @@ def filtra_contornos(mask, A_min=700, n=0):
     return (cnt_list, area_list)
 
 
-def match_contours(contours, shape="rect", tela=None):
+def match_contours(contours, shape="rect", tela=None): #TODO: tipos (principalmente saída)
     center_list = []
     dimension_list = []
     vector_list = []
@@ -95,8 +96,8 @@ def match_contours(contours, shape="rect", tela=None):
 
 
 def link_0(
-    R, points, colors, v, dimension, tag=["black", "black"], tela=None, delta=10
-):
+    R, points, colors, v, dimension, tag=("black", "black"), tela=None, delta=10
+) -> tuple[complex, tuple[str,str], complex]: # TODO: nome horrível, mudar
 
     L_ref = 32.5 + 17.5j
     k = (dimension.real / 65 + dimension.imag / 30) / 2
@@ -123,8 +124,6 @@ def link_0(
 
     nota = abs(abs(T.real) - Z.real) + abs(abs(T.imag) - Z.imag)
 
-    # print( 'T',T )
-
     filtro = nota < delta
     nota = nota[filtro]
     colors = colors[filtro]
@@ -135,15 +134,12 @@ def link_0(
     colors = colors[filtro]
     T = T[filtro]
 
-    # print(f' K: {k} // ','v',v,'Dimension',dimension)
-    # print('Nota[filtro]',nota)
-
     # decide quais os pontos escolhidos
     center = R
     for i, p in enumerate(T):
         A = T[i + 1 :] - p.conj()
         filtro = abs(A) < delta
-        # print( f'tentativa {i} -> A', A )
+
         if True in filtro:
             c1 = colors[i]
             c2 = colors[i + 1 :][filtro][0]
@@ -152,9 +148,9 @@ def link_0(
             v = center - R
             v = v / abs(v)
             if (p.real > 0) == (p.imag > 0):
-                tag = [c1, c2]
+                tag = (c1, c2)
             else:
-                tag = [c2, c1]
+                tag = (c2, c1)
             break
 
     cv2.circle(tela, complex_to_xy(center), 3, (0, 255, 255), 2)
@@ -166,12 +162,10 @@ def link_0(
     return (center, tag, v)
 
 
-def sort_bots(dict):
-    a = sorted(dict.items(), key=lambda x: x[0])
+def sort_bots(dic: dict[int, dict]):
+    a = sorted(dic.items(), key=lambda bot: bot[0])
     return {b[0]: b[1] for b in a}
 
-
-print("BEGIN")
 
 matriz = np.ndarray
 def inrange(A: matriz, h_min, h_max, s_min, v_min):
@@ -181,51 +175,85 @@ def inrange(A: matriz, h_min, h_max, s_min, v_min):
     )
     return np.array(C, np.uint8)
 
-""" # TODO: fazer isso com a entrada ou algo assim
+# TODO: kw_only
 @dataclass
-class IN():
-   saturação: int
-   valor: int
-   cor: int
-   delta: int
-"""
-def vision(img: np.ndarray, COLOR: dict[int], IN: dict[any], conv: int): #frame, dict das cores, dicionario pra coisas extras, conversão px2cm
+class vision_conf():
+    v_min:    int
+    s_min:    int
+    area_min: int
+    delta:    int
+    colors:   dict[str, dict[str, int]] # TODO: melhorar isso
+    
+    @staticmethod
+    def from_dict(vs_in, vs_colors):
+        return vision_conf(
+            v_min    = vs_in["V min"],
+            s_min    = vs_in["S min"],
+            area_min = vs_in["area min"],
+            delta    = vs_in["delta"],
+            colors = vs_colors,
+        )
 
+@dataclass(kw_only=True)
+class ball_info():
+    ok:        bool
+    pos:       tuple[float,float] # TODO: ver se realmente tá certo
+    dimension: int                # TODO: ver se realmente tá certo
+
+@dataclass
+class bot_info():
+    id:          int
+    pos:         complex
+    orientation: float
+    dimension:   complex
+    vector:      complex
+    colors:      tuple[str, str] # TODO: na verdade costuma ser uma lista (melhor mudar nos outros lugares do que aqui
+
+@dataclass
+class vision_info():
+    ball:  ball_info = field(
+        default_factory=lambda: ball_info(ok=False, pos=0, dimension=0)
+    )
+    teams: dict[str, dict[int, bot_info]] = field(
+        default_factory=lambda: dict(team_yellow={}, team_blue={})
+    )
+
+
+def vision(img: np.ndarray, cfg: vision_conf, conv: int) -> tuple[vision_info, dict]:
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    # -----------------------------------------------------------------------------------------
-    # OBTENÇÃO DAS INFORMAÇÕES DE CADA COR ----------------------------------------------------
-    # CENTRO / VETOR DIRETOR / DIMENSSÕES  ----------------------------------------------------
-    # -----------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------
+    # OBTENÇÃO DAS INFORMAÇÕES DE CADA COR ------------------------------
+    # CENTRO / VETOR DIRETOR / DIMENSÕES   ------------------------------
+    # -------------------------------------------------------------------
     data_center = {}
     data_vector = {}
     data_dimension = {}
-    # UMA COR DE CADA VEZ ---------------------------------------------------------------------
+    # UMA COR DE CADA VEZ -----------------------------------------------
 
     tela = hsv.copy()
     color_img = np.zeros(img.shape, np.uint8)
 
-    for i, color in enumerate(COLOR["MEAN"]):
-
-        # MASK ----------------------------------------------------------------------------------
-        if COLOR["MIN"][color] < COLOR["MAX"][color]:
+    for i, color in enumerate(cfg.colors["MEAN"]):
+        # MASK ----------------------------------------------------------
+        if cfg.colors["MIN"][color] < cfg.colors["MAX"][color]:
             mask = cv2.inRange(
                 hsv,
-                (COLOR["MIN"][color], IN["S min"], IN["V min"]),
-                (COLOR["MAX"][color], 255, 255),
+                (cfg.colors["MIN"][color], cfg.s_min, cfg.v_min),
+                (cfg.colors["MAX"][color], 255, 255),
             )
         else:
             mask = cv2.inRange(
-                hsv, (COLOR["MIN"][color], IN["S min"], IN["V min"]), (180, 255, 255)
+                hsv, (cfg.colors["MIN"][color], cfg.s_min, cfg.v_min), (180, 255, 255)
             )
             mask |= cv2.inRange(
-                hsv, (0, IN["S min"], IN["V min"]), (COLOR["MAX"][color], 255, 255)
+                hsv, (0, cfg.s_min, cfg.v_min), (cfg.colors["MAX"][color], 255, 255)
             )
-        color_img[np.array(mask, np.bool8)] = [COLOR["MEAN"][color], 255, 255]
-        # MASK ----------------------------------------------------------------------------------
+        color_img[np.array(mask, np.bool8)] = [cfg.colors["MEAN"][color], 255, 255]
+        # MASK ----------------------------------------------------------
 
-        # OBTENÇÃO DAS INFORMAÇÕES DE CADA COR --------------------------------------------------
-        # CENTRO / VETOR DIRETOR / DIMENSSÕES  --------------------------------------------------
+        # OBTENÇÃO DAS INFORMAÇÕES DE CADA COR --------------------------
+        # CENTRO / VETOR DIRETOR / DIMENSÕES   --------------------------
         n = 0
         shape = "rect"
         if color == "darkblue" or color == "yellow":
@@ -234,7 +262,7 @@ def vision(img: np.ndarray, COLOR: dict[int], IN: dict[any], conv: int): #frame,
             n = 1
             shape = "circle"
 
-        contornos, area = filtra_contornos(mask, 5 * IN["area min"], n=n)
+        contornos, area = filtra_contornos(mask, 5 * cfg.area_min, n=n)
         center, dimension, vector, box = match_contours(
             contornos, shape=shape
         )  # , tela=hsv_2 )
@@ -242,9 +270,9 @@ def vision(img: np.ndarray, COLOR: dict[int], IN: dict[any], conv: int): #frame,
         data_center[color] = xy_to_complex(center)
         data_vector[color] = xy_to_complex(vector)
         data_dimension[color] = xy_to_complex(dimension)
-        # ----------------------------------------------------------------------------------------
+        # ---------------------------------------------------------------
 
-        # MARCAÇOES NA TELA --------------------------------------------------------
+        # MARCAÇOES NA TELA ---------------------------------------------
         # cv2.drawContours( hsv, contornos, -1, (color_hue_mean[i],255,255), 0 )
         if color == "orange":
             if len(center) > 0:
@@ -253,66 +281,33 @@ def vision(img: np.ndarray, COLOR: dict[int], IN: dict[any], conv: int): #frame,
                 cv2.circle(color_img, center[0], dimension[0][0], (60, 255, 255), 2)
         else:
             for p in center:
-                cv2.circle(tela, p, 5, (COLOR["MEAN"][color], 255, 255), 2)
+                cv2.circle(tela, p, 5, (cfg.colors["MEAN"][color], 255, 255), 2)
             for b in box:
-                cv2.drawContours(tela, [b], 0, (COLOR["MEAN"][color], 255, 255), 2)
-    # ------------------------------------------------------------------------------------------------
+                cv2.drawContours(tela, [b], 0, (cfg.colors["MEAN"][color], 255, 255), 2)
 
-    # -----------------------------------------------------------------------------------------
-    # SEGMENTAÇÃO DOS DADOS DE COR ------------------------------------------------------------
-    # ORIENTAÇÃO GLOBAL ROBÔS E BOLA  ---------------------------------------------------------
-    # -----------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------
+    # SEGMENTAÇÃO DOS DADOS DE COR --------------------------------------
+    # ORIENTAÇÃO GLOBAL ROBÔS E BOLA  -----------------------------------
+    # -------------------------------------------------------------------
 
-    # robôs: time / id / angle / vector / pos / dimension
-
-    # message SSL_DetectionBall {
-    #  required float  confidence = 1;
-    #  optional uint32 area       = 2;
-    #  required float  x          = 3;
-    #  required float  y          = 4;
-    #  optional float  z          = 5;
-    #  required float  pixel_x    = 6;
-    #  required float  pixel_y    = 7;
-    # }
-
-    # message SSL_DetectionRobot {
-    #  required float  confidence  =  1;
-    #  optional uint32 robot_id    =  2;
-    #  required float  x           =  3;
-    #  required float  y           =  4;
-    #  optional float  orientation =  5;
-    #  required float  pixel_x     =  6;
-    #  required float  pixel_y     =  7;
-    #  optional float  height      =  8;
-    # }
-
-    ball_detection = {"ok": False, "pos": 0, "dimension": 0}
-
-    bot_detection = {
-        "id": 0,
-        "pos": 0,
-        "orientation": 0,
-        "dimension": 0,
-        "vector": 0,
-        "colors": ["orange", "orange"],
-    }
-
-    game = {"ball": ball_detection, "team_blue": {}, "team_yellow": {}}
+    game = vision_info()
 
     # Bola ------------------------------------------------------------------------------------
     if len(data_center["orange"]):
-        game["ball"]["ok"] = True
-        game["ball"]["pos"] = data_center["orange"][0] * conv
-        game["ball"]["dimension"] = data_dimension["orange"][0] * conv
-    # -----------------------------------------------------------------------------------------
+        game.ball = ball_info(
+            ok=True,
+            pos=data_center["orange"][0]*conv,
+            dimension=data_dimension["orange"][0]*conv,
+        )
+    # -------------------------------------------------------------------
 
-    # TRANSFORMA EM NUMPY ARRAY PARA FACILITAR O PROCESSAMENTO --------------------------------
+    # TRANSFORMA EM NUMPY ARRAY PARA FACILITAR O PROCESSAMENTO ----------
     SEG_COLORS = []
     SEG_POINTS = []
-    for color in ["red", "blue", "green", "pink"]:
+    for color in ("red", "blue", "green", "pink"): # TODO: tenho a impressão que isso aqui era meia linha só e tá 5
         SEG_COLORS = np.append(SEG_COLORS, np.array(len(data_center[color]) * [color]))
         SEG_POINTS = np.append(SEG_POINTS, np.array(data_center[color]))
-    # -----------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------
 
     tag2number = {
         "darkblue": 0,
@@ -322,51 +317,53 @@ def vision(img: np.ndarray, COLOR: dict[int], IN: dict[any], conv: int): #frame,
         "blue": 3,
         "pink": 4,
     }
+    # TODO: tirar esse if e fazer uma tuplatupla que nem naquele outro
+    # SEGMENTAÇÕES DOS ROBÔS UM DE CADA VEZ -----------------------------
+    for team in ("darkblue", "yellow"):
+        gen_id = 50 #TODO: oqq é isso (generated id?)
+        team_key = "team_yellow" if team == "yellow" else "team_blue"
 
-    # SEGUIMENTAÇÕES DOS ROBÔS UM DE CADA VEZ -------------------------------------------------
-    for team in ["darkblue", "yellow"]:
-        gen_id = 50
-        if team == "yellow":
-            team_key = "team_yellow"
-        else:
-            team_key = "team_blue"
-        for i, ref in enumerate(data_center[team]):
-            if i < 3:
-                center, tag, v = link_0(
-                    ref,
-                    SEG_POINTS,
-                    SEG_COLORS,
-                    data_vector[team][i],
-                    data_dimension[team][i],
-                    tag=[team, team],
-                    tela=tela,
-                    delta=IN["delta"],
-                )
-                id = 10 * tag2number[tag[0]] + tag2number[tag[1]]
-                if id == 0:
-                    id = gen_id
-                    gen_id += 1
-                game[team_key][id] = bot_detection.copy()
-                game[team_key][id]["id"] = id
-                game[team_key][id]["pos"] = center * conv
-                game[team_key][id]["colors"] = tag
-                game[team_key][id]["orientation"] = polar(v)[1]
-                game[team_key][id]["vector"] = v
-                game[team_key][id]["dimension"] = data_dimension[team][i] * conv
-        game[team_key] = sort_bots(game[team_key])
-    # -----------------------------------------------------------------------------------------
+        for i, ref in enumerate(data_center[team][:3]):
+            center, tag, v = link_0(
+                ref,
+                SEG_POINTS,
+                SEG_COLORS,
+                data_vector[team][i],
+                data_dimension[team][i],
+                tag=(team, team),
+                tela=tela,
+                delta=cfg.delta,
+            )
+            
+            # TODO: melhorar essa partezinha
+            id = 10 * tag2number[tag[0]] + tag2number[tag[1]]
+            if id == 0: 
+                id = gen_id
+                gen_id += 1
 
-    # ATUALIZA OS MONITORES -------------------------------------------------------------------
-    img_data = {}
-    img_data["vision"] = tela
-    img_data["colors"] = color_img
-    # OUT[ 'monitor_color' ].update_hsv( color_img )
-    # OUT[ 'monitor_mask' ].update_hsv(tela)
-    # -----------------------------------------------------------------------------------------
+            game.teams[team_key][id] = bot_info(
+                id=id,
+                pos=center*conv,
+                colors=tag,
+                orientation=polar(v)[1],
+                vector=v,
+                dimension=data_dimension[team][i] * conv,
+            )
+
+        game.teams[team_key] = sort_bots(game.teams[team_key]) # TODO: esse sort_bots provavelmente deveria ser sorted([bot for id, bot in game.teams[team_key].items()], key=lambda bot: bot["id"])
+    # -------------------------------------------------------------------
+
+    # ATUALIZA OS MONITORES ---------------------------------------------
+    img_data = dict(vision=tela, colors=color_img)
+
+    # OUT['monitor_color'].update_hsv(color_img)
+    # OUT['monitor_mask' ].update_hsv(tela)
+    # -------------------------------------------------------------------
 
     return (game, img_data)
 
 
+"""
 if __name__ == "__main__":
 
     COLOR = {}
@@ -456,3 +453,4 @@ if __name__ == "__main__":
 
         if cv2.waitKey(1) == ord("q"):
             break
+"""
