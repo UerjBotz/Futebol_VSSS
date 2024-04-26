@@ -202,7 +202,7 @@ class painel:
         estado_atual = [{"name": nome, "default": slider.get()}
                         for nome, slider in self.sliders.items()]
         caminho = os.path.join("config", f"{self.name}.json")
-        if not os.path.exists(caminho):
+        if not os.path.exists("config"):
             os.makedirs("config")
 
         with open(caminho, "wt") as f:

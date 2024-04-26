@@ -92,49 +92,44 @@ def plot_arrow(img, center, v, hue=0):
 
 #### GET INFO #############################################
 
-
-def get_ball():
-    return (vs_info.ball.pos, vs_info.ball.ok)
-
-
-def get_bot_ref(): # TODO: time hardcoded
+def _get_bot_ref(): # TODO: time e ID hardcoded
 
     ID = 24
     TEAM = "team_yellow"
     MARK = "team_blue"
     ok = False
 
-    p = theta = 0
+    pos = theta = 0
 
-    # if( ID in vs_info.teams[TEAM] ):
+    # if ID in vs_info.teams[TEAM] :
     if len(vs_info.teams[TEAM]) > 0:
         ID = list(vs_info.teams[TEAM].keys())[0]
-        # if( vs_info.teams['ball']['ok'] ):
-        #    y_set = int(vs_info.teams['ball']['pos'].imag)
+        # if vs_info.ball.ok :
+        #    y_set = int(vs_info.ball.pos.imag)
         if len(vs_info.teams[MARK]) > 0:
             ID_M = list(vs_info.teams[MARK].keys())[0]
-        p = vs_info.teams[TEAM][ID].pos
+        pos = vs_info.teams[TEAM][ID].pos
         theta = vs_info.teams[TEAM][ID].orientation
         ok = True
 
-    return (p, theta, ok)
+    return (pos, theta, ok)
 
 
-def get_bot_blue():
+def _get_bot_blue(): #TODO: ID hardcoded
 
     ID = 24
     TEAM = "team_blue"
 
     ok = False
-    p = theta = 0
+    pos = theta = 0
 
     if len(vs_info.teams[TEAM]) > 0:
         ID = list(vs_info.teams[TEAM].keys())[0]
-        p = vs_info.teams[TEAM][ID]["pos"]
-        theta = vs_info.teams[TEAM][ID]["orientation"]
+        pos = vs_info.teams[TEAM][ID].pos
+        theta = vs_info.teams[TEAM][ID].orientation
         ok = True
 
-    return (p, theta, ok)
+    return (pos, theta, ok)
 
 
 # STEP RESPONSE ===========================================================
@@ -230,7 +225,7 @@ def loop():
         gui.tag0.set(f"campo: ({campo_mm_x},{campo_mm_y})mm / {10*PX2CM:0.2f}mm/px")
 
         # VISION ========================================================
-        global vs_conf, _VS_OUT
+        global vs_conf
         global vs_info, vs_flag_new_data
         vs_flag_new_data = True
         tela = img.copy()
@@ -284,15 +279,21 @@ def loop():
 
         ## [3] ##
         ## Input vision data ============================================
-        p, theta, bot_ok = get_bot_ref()
-        ball, ball_ok = get_ball()
+        pos, theta, bot_ok = centro, 0, False # mudar pra bot_existe
+        for time in ("team_blue", "team_yellow"):
+            for ID, bot in vs_info.teams[time].items():
+                pos, theta, bot_ok = bot.pos, bot.orientation, True
+                break
+
+        ball, ball_ok = vs_info.ball.pos, vs_info.ball.ok
+
         centro = int(campo_mm_x / 2) + 1j * int(campo_mm_y / 2)
 
         x = y = vl = vr = dist = erro = d_theta = 0
         erro_l = erro_g = 0
 
-        erro_l = abs(centro - p)
-        vector_d = centro - p
+        erro_l = abs(centro - pos)
+        vector_d = centro - pos
         if erro_l < 50:
             erro_g = constrain_angle(0 - theta)
         else:
@@ -308,12 +309,12 @@ def loop():
         ## Input vision data ============================================
 
         ## [4] ##
-        x = int(p.real)  # ??
+        x = int(pos.real)  # TODO: bot_x?
 
         ## Controle do robô =============================================
         if bot_ok: # TODO: tirar esse if e ver oqq esse bot_ok é
 
-            plot_x(monitors["vision"], p, color=(110, 255, 255))
+            plot_x(monitors["vision"], pos, color=(110, 255, 255))
             kl = 0.1 * gui.painel_pid.sliders["kl"].get()
             kth = 5 * 0.01 * gui.painel_pid.sliders["kth"].get()
             Q_ball = -0.2 * gui.painel_pid.sliders["Q_ball"].get()
@@ -322,11 +323,12 @@ def loop():
             # bot_control_lin.ki = 0.1*gui.painel_pid.sliders['kd'].get()
             bot_control_lin.I_max = 100
             bot_control_lin.kp = kl
-
-            # MODO vai para o centro
-            if MODE == "CENTRO":
+            
+            if False:
+                ...
+            elif MODE == "CENTRO": # MODO vai para o centro
                 # from controle import go2point
-                r1 = centro - p
+                r1 = centro - pos
                 erro_l = abs(r1)
                 a1 = constrain_angle(polar(r1)[1])
                 if erro_l < (40 + state * 40):
@@ -339,11 +341,9 @@ def loop():
 
                 bot_linear_speed = round(kl * erro_l, 3)
                 bot_angular_speed = round(kth * constrain_angle(erro_g), 3)
-
             elif MODE == "kick":
-
                 if state == 0:  # vai até antes da bola
-                    vector_d = (ball - 180) - p
+                    vector_d = (ball - 180) - pos
                     erro_l = abs(vector_d)
                     if erro_l < 40:
                         state = 1
@@ -355,7 +355,7 @@ def loop():
                         bot_angular_speed = round(kth * erro_g, 3)
 
                 if state == 1:  # ajusta o angulo
-                    vector_d = ball - p
+                    vector_d = ball - pos
                     erro_l = abs(vector_d)
                     theta_set = polar(vector_d)[1]
                     erro_g = constrain_angle(theta_set - theta)
@@ -367,7 +367,7 @@ def loop():
                         bot_angular_speed = round(kth * erro_g, 3)
 
                 if state == 2:  # vai até a bola
-                    vector_d = ball - p
+                    vector_d = ball - pos
                     erro_l = abs(vector_d)
                     if erro_l < 90:
                         state = 3
@@ -391,11 +391,9 @@ def loop():
                     bot_linear_speed = 0
                     bot_angular_speed = 0.0
                     gui.mode.update("STOP")
-
             elif MODE == "v_kick":
-
                 if state == 0:  # vai até antes da bola
-                    vector_d = p - centro
+                    vector_d = pos - centro
                     erro_l = abs(vector_d)
 
                     from controle import field1, get_force
@@ -406,7 +404,7 @@ def loop():
                         bot_linear_speed = 0
                         bot_angular_speed = round(kth * erro_g, 3)
                     else:
-                        z = p - centro
+                        z = pos - centro
                         # carga ao redor do centro
                         R = 50
                         F1 = get_force(-6 * Q_ball, 1, 0, z)
@@ -433,11 +431,9 @@ def loop():
                     bot_linear_speed = 0
                     bot_angular_speed = 0.0
                     gui.mode.update("STOP")
-
             elif MODE == "REPELE":
-
                 if state == 0:  # vai até antes da bola
-                    vector_d = p - ball
+                    vector_d = pos - ball
                     erro_l = abs(vector_d)
 
                     from controle import field1, get_force
@@ -452,7 +448,7 @@ def loop():
                         if ball_ok:
                             F1 = 0
                             plot_x(monitors["vision"], centro, color=(120, 255, 255))
-                            F1 += get_force(Q_ball, 1, 0, p - ball)
+                            F1 += get_force(Q_ball, 1, 0, pos - ball)
                             v = F1
                             v = v / abs(v)
                             erro_g = constrain_angle(
@@ -469,9 +465,7 @@ def loop():
                     bot_linear_speed = 0
                     bot_angular_speed = 0.0
                     gui.mode.update("STOP")
-
             elif MODE == "VECT":
-
                 if state == 0:
                     saver.init(
                         "vector_path.txt",
@@ -487,27 +481,27 @@ def loop():
                 from controle import get_force
 
                 plot_x(monitors["vision"], ball, color=(120, 255, 255))
-                F = get_force(-Q_ball, 1, 0, ball - p)
+                F = get_force(-Q_ball, 1, 0, ball - pos)
                 plot_arrow(monitors["vision"], ball, F, 30)
-                plot_arrow(monitors["vision"], p, F, 30)
+                plot_arrow(monitors["vision"], pos, F, 30)
                 erro_g = constrain_angle(polar(F)[1] - theta)
                 plot_text(
                     monitors["vision"],
-                    p + 40 + 40j,
+                    pos + 40 + 40j,
                     f"{ int((erro_g)*180.0/np.pi) }",
                     (0, 255, 255),
                 )
                 if len(vs_info.teams[TEAM]) > 0:
                     for ID in vs_info.teams[TEAM]:
-                        pb = vs_info.teams[TEAM][ID]["pos"]
+                        pb = vs_info.teams[TEAM][ID].pos
                         print(f"vs_info.teams[TEAM][{ID}][pos] = {pb}")
-                        if abs(p - pb) < 500:
-                            f = get_force(-Q_obs, 1, 0, pb - p)
+                        if abs(pos - pb) < 500:
+                            f = get_force(-Q_obs, 1, 0, pb - pos)
                             F += f
                             plot_arrow(monitors["vision"], pb, f, 30)
-                            plot_arrow(monitors["vision"], p, f, 30)
+                            plot_arrow(monitors["vision"], pos, f, 30)
                 print(f"ball{ball} -> F {F}")
-                erro_l = abs(ball - p)
+                erro_l = abs(ball - pos)
                 if erro_l < 80:
                     bot_linear_speed = 0
                     bot_angular_speed = 0.0
@@ -530,7 +524,7 @@ def loop():
                     bot_linear_speed = 0
 
                 saver.loop(
-                    f"{round(p.real,3)} {round(p.imag,3)} { round(np.rad2deg(theta),3) } {round(ball.real,3)} {round(ball.imag,3)} {round(pb.real,3)} {round(pb.imag,3)}"
+                    f"{round(pos.real,3)} {round(pos.imag,3)} { round(np.rad2deg(theta),3) } {round(ball.real,3)} {round(ball.imag,3)} {round(pb.real,3)} {round(pb.imag,3)}"
                 )
 
             # elif( MODE == 'PID 2' ): # ajuste angulo apenas
@@ -604,10 +598,24 @@ def gui_loop():
     vs_conf, _VS_OUT = gui.loop()
 
 
-gui_loop()
-loop()
+def main() -> bool:
+    try:
+        gui_loop()
+        loop()
+        gui.win.mainloop()
+    except KeyboardInterrupt:
+        print("terminando programa")
+        
+    except Exception as e:
+        print(f"!!ERRO:: {e}")
+        return False
+    finally:
+        gui.camera.close()
 
-gui.win.mainloop()
+    return True
 
-gui.camera.close()
-
+if __name__ == "__main__":
+    sucesso = main()
+    while not sucesso:
+        sucesso = main()
+        
