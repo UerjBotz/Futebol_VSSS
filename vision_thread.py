@@ -197,8 +197,8 @@ class vision_conf():
 @dataclass(kw_only=True)
 class ball_info():
     ok:        bool
-    pos:       tuple[float,float] # TODO: ver se realmente tá certo
-    dimension: int                # TODO: ver se realmente tá certo
+    pos:       complex
+    dimension: complex
 
 @dataclass
 class bot_info():
