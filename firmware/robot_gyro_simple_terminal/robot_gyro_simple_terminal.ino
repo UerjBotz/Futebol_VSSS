@@ -28,12 +28,12 @@ BluetoothSerial SerialBT;
 // ESPNOWSerial
 // ================================================================================
 #include "ESPNOWSerial.h"
-String ESPNOW_rcv_str = "";
-void ESPNOWSerial_callback(const uint8_t *mac, const uint8_t *data, int size){
-  if( size <= 0 || size > 255 ) return;
-  //ESPNOW_rcv_str = (const char*) data; //ESPNOWSerial.readString();
-  for(int i=0;i<size;i++) ESPNOW_rcv_str += (char)data[i];
-}
+// String ESPNOW_rcv_str = "";
+// void ESPNOWSerial_callback(const uint8_t *mac, const uint8_t *data, int size){
+//   if( size <= 0 || size > 255 ) return;
+//   //ESPNOW_rcv_str = (const char*) data; //ESPNOWSerial.readString();
+//   for(int i=0;i<size;i++) ESPNOW_rcv_str += (char)data[i];
+// }
 
 // ================================================================================
 // Motores
@@ -64,7 +64,7 @@ float voltage(){
 // CONTROLADOR PID
 // ================================================================================
 
-float absf( float v ){ return ( v < 0 ? -v : v ); }
+float absf(float v) { return ( v < 0 ? -v : v ); }
 
 String pid_log = "";
 String pid_log_plot = "";
@@ -83,7 +83,7 @@ class control_pid{
   float Imax = 1000;
   float loop(float erro){
     uint32_t ms = millis();
-    uint32_t dt = ms - last_ms; if( dt == 0 ) dt = 1;
+    uint32_t dt = (ms - last_ms) ?: 1;
     P = erro;
     D = 1000.0*( erro - last_erro )/(float)dt;
     //I = constrain( I+ki*0.001*erro*dt, -I_MAX, I_MAX );
@@ -102,7 +102,7 @@ control_pid PID_w;
 float pid_speed   = 0; // linear speed
 float pid_speed_w = 0; // angular speed
 
-int pid_w( int lin, float w ){
+int pid_w (int lin, float w) {
 
   // -------------------------------------------------------------------------------------------------------------------------------------
   // executa controlador
@@ -138,7 +138,7 @@ int pid_w( int lin, float w ){
   // -------------------------------------------------------------------------------------------------------------------------------------
   // Se estiver girado não mexe
   // -------------------------------------------------------------------------------------------------------------------------------------
-  if( absf(IMU.ac_z_filter) > 4.0 ) motor.move( vl, vr );
+  if (absf(IMU.ac_z_filter) > 4.0) motor.move(vl, vr);
   else motor.stop();
 
   // -------------------------------------------------------------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ int pid_w( int lin, float w ){
 // TESTE e MEDIÇÃO DO CONTROLADOR PID
 // ================================================================================
 
-String pid_test( int lin, float w, uint16_t n, uint16_t dt ){
+String pid_test (int lin, float w, uint16_t n, uint16_t dt) {
   String result = "";
   String line = "n t lin w gyro out\n";
   result += line;
@@ -185,17 +185,17 @@ String pid_test( int lin, float w, uint16_t n, uint16_t dt ){
   int i=0;
   while(i<n){
     IMU.update();
-    int out = pid_w( lin, w );
-    if( millis() >= timeout ){
+    int out = pid_w(lin, w);
+    if (millis() >= timeout) {
       i++;
       timeout = millis() + dt;
-      line = String(i) + " " + String(millis()) + " " + String( lin ) + " " + String( w ) + " " + String( IMU.g.gyro.z ) + " " + String( out ) + "\n";
+      line = String(i) + " " + String(millis()) + " " + String(lin) + " " + String(w) + " " + String(IMU.g.gyro.z) + " " + String(out) + "\n";
       result += line;
       Serial.print(line);
     }
   }
   motor.stop();
-  ESPNOWSerial.println( result );
+  ESPNOWSerial.println(result);
   return result;
 }
 
@@ -220,7 +220,7 @@ void stop(){
 }
 
 void run() {
-  if( running ){
+  if (running) {
     pid_w( pid_speed, pid_speed_w );
   }
 }
@@ -238,15 +238,15 @@ String str_array(const char *nome, T * arr, uint32_t sz){
   return str;
 }
 
-#define ID_ROBO 1
+#define ID_ROBO 2
 
-String terminal( const char *const cmd ){
+String terminal (const char *const cmd) {
   
   char key[20]; int id; float x,y,z;
   int i = sscanf(cmd,"%s %d %f %f %f ",key,&id,&x,&y,&z);
   if (i == 0) return "> fail";
 
-  if (id != ID_ROBO) return "";
+  if (id != ID_ROBO) return ""; i--;
 
   String resposta = "> ";
   //-- comandos MCU --//
@@ -276,33 +276,33 @@ String terminal( const char *const cmd ){
   
   //-- sensoriamento --//
   else if (strcmp(key,"voltage") == 0 ) {
-      resposta += "Voltage: " + String(voltage()) + " V\n";
+    resposta += "Voltage: " + String(voltage()) + " V\n";
   }else if (strcmp(key,"IMU") == 0 ) {
-      //IMU.update();
-      resposta += ( "ac(x,y,z)[m/s²]: "    + String(IMU.a.acceleration.x,2) + " " + String(IMU.a.acceleration.y,2) + " " + String(IMU.a.acceleration.z,2) + "\n" );
-      resposta += ( "gyro(x,y,z)[rad/s]: " + String(IMU.g.gyro.x        ,2) + " " + String(IMU.g.gyro.y        ,2) + " " + String(IMU.g.gyro.z        ,2) + "\n" );
-      resposta += ( "temp[°C]: "           + String(IMU.temp.temperature,2) + "\n" );
+    //IMU.update();
+    resposta += ( "ac(x,y,z)[m/s²]: "    + String(IMU.a.acceleration.x,2) + " " + String(IMU.a.acceleration.y,2) + " " + String(IMU.a.acceleration.z,2) + "\n" );
+    resposta += ( "gyro(x,y,z)[rad/s]: " + String(IMU.g.gyro.x        ,2) + " " + String(IMU.g.gyro.y        ,2) + " " + String(IMU.g.gyro.z        ,2) + "\n" );
+    resposta += ( "temp[°C]: "           + String(IMU.temp.temperature,2) + "\n" );
   }
 
   //-- help --//
   else if (strcmp(key,"help") == 0 ) {
-      resposta += "help list:\n";
-      resposta += "speed_tg:\t" + String(pid_speed  ) + "\n";
-      resposta += "speed_w:\t"  + String(pid_speed_w) + "\n";
-      resposta += "Kp:\t"       + String(PID_w.kp) + "\n";
-      resposta += "Ki:\t"       + String(PID_w.ki) + "\n";
-      resposta += "Kd:\t"       + String(PID_w.kd) + "\n";
-      resposta += "P:\t"        + String(PID_w.P) + "\n";
-      resposta += "I:\t"        + String(PID_w.I) + "\n";
-      resposta += "D:\t"        + String(PID_w.D) + "\n";
-      resposta += "Imax:\t"     + String(PID_w.Imax) + "\n";
-      resposta += "outros comandos:\n";
-      resposta += "reset\n";
-      resposta += "start\n";
-      resposta += "stop\n";
-      resposta += "speed\n";
-      resposta += "w\n";
-      resposta += "help\n";
+    resposta += "help list:\n";
+    resposta += "speed_tg:\t" + String(pid_speed  ) + "\n";
+    resposta += "speed_w:\t"  + String(pid_speed_w) + "\n";
+    resposta += "Kp:\t"       + String(PID_w.kp) + "\n";
+    resposta += "Ki:\t"       + String(PID_w.ki) + "\n";
+    resposta += "Kd:\t"       + String(PID_w.kd) + "\n";
+    resposta += "P:\t"        + String(PID_w.P) + "\n";
+    resposta += "I:\t"        + String(PID_w.I) + "\n";
+    resposta += "D:\t"        + String(PID_w.D) + "\n";
+    resposta += "Imax:\t"     + String(PID_w.Imax) + "\n";
+    resposta += "outros comandos:\n";
+    resposta += "reset\n";
+    resposta += "start\n";
+    resposta += "stop\n";
+    resposta += "speed\n";
+    resposta += "w\n";
+    resposta += "help\n";
   }
 
   //-- motor --//
@@ -310,7 +310,7 @@ String terminal( const char *const cmd ){
          if(i == 2) motor.move( constrain(x,-1023,1023), constrain(x,-1023,1023) );
     else if(i >= 3) motor.move( constrain(x,-1023,1023), constrain(y,-1023,1023) );
     resposta += "move: " + String(motor.read(0)) + " " + String(motor.read(1)) + "\n";
-    if( i==4 ){
+    if (i==4) {
       z = abs(z);
       z = constrain(z,0,10000);
       resposta += String(z) + " ms ";
@@ -355,20 +355,20 @@ String terminal( const char *const cmd ){
   
   //-- variaveis de estado do controlador --//
   else if (strcmp(key,"P") == 0) {
-      if(i==2) PID_w.P = x;
-      resposta += "P: " + String(PID_w.P) + "\n";
+    if(i==2) PID_w.P = x;
+    resposta += "P: " + String(PID_w.P) + "\n";
   } else if (strcmp(key,"I") == 0 ) {
-      if(i==2) PID_w.I = x;
-      resposta += "I: " + String(PID_w.I) + "\n";
+    if(i==2) PID_w.I = x;
+    resposta += "I: " + String(PID_w.I) + "\n";
   } else if (strcmp(key,"D") == 0 ) {
-      if(i==2) PID_w.D = x;
-      resposta += "D: " + String(PID_w.D) + "\n";
+    if(i==2) PID_w.D = x;
+    resposta += "D: " + String(PID_w.D) + "\n";
   } else if (strcmp(key,"speed") == 0 ) {
-      if(i==2) pid_speed = constrain(x,-1023,1023);
-      resposta += "speed: " + String(pid_speed) + "\n";
+    if(i==2) pid_speed = constrain(x,-1023,1023);
+    resposta += "speed: " + String(pid_speed) + "\n";
   } else if (strcmp(key,"w") == 0 ) {
-      if(i==2) pid_speed_w = x;
-      resposta += "speed_w: " + String(pid_speed_w) + "\n";
+    if(i==2) pid_speed_w = x;
+    resposta += "speed_w: " + String(pid_speed_w) + "\n";
   }
 
   return resposta;
@@ -378,6 +378,8 @@ String terminal( const char *const cmd ){
 // ================================================================================
 // MAIN
 // ================================================================================
+
+uint8_t mac_tx[6] = {0x7C,0x9E,0xBD,0xD6,0xDE,0x60};
 
 void setup() {
 
@@ -389,8 +391,9 @@ void setup() {
   ESPNOWSerial.begin();
   ESPNOWSerial.setTimeout(20);
   ESPNOWSerial.setWriteDelay(10);
-  ESPNOWSerial.canReciveFrom_anyDevice();
-  ESPNOWSerial.printf( "ESPNOWSerial, Hello World!\n" );
+  //ESPNOWSerial.canReciveFrom_anyDevice();
+  ESPNOWSerial.canReciveFrom_MacList(mac_tx, 1);
+  ESPNOWSerial.printf("ESPNOWSerial, Hello World!\n");
 
   IMU.begin();
 
@@ -445,14 +448,23 @@ void loop() {
   //}
 
   // terminal pela serial
-  //if(Serial.available() > 0){
-  while(Serial.available() > 0){
+  while (Serial.available() > 0) {
     String CMD = Serial.readStringUntil(';');
-    //String CMD = SerialBT.readString();
-    Serial.println(CMD);
-    ESPNOWSerial.println( CMD );
     String resposta = terminal(CMD.c_str());
     if (resposta != "") { 
+      Serial.println(CMD);
+      ESPNOWSerial.println(CMD);
+      Serial.println(resposta);
+      ESPNOWSerial.println(resposta);
+    }
+  }
+  // terminal pelo ESPNOW
+  while (ESPNOWSerial.available() > 0) {
+    String CMD = ESPNOWSerial.readStringUntil(';');
+    String resposta = terminal(CMD.c_str());
+    if (resposta != "") { 
+      Serial.println(CMD);
+      ESPNOWSerial.println(CMD);
       Serial.println(resposta);
       ESPNOWSerial.println(resposta);
     }
@@ -467,17 +479,4 @@ void loop() {
   //  Serial.println(resposta);
   //  SerialBT.println(resposta);
   //}
-
-  // terminal pelo ESPNOW
-  //if(ESPNOWSerial.available() > 0){
-  while( ESPNOWSerial.available() > 0 ){
-    String CMD = ESPNOWSerial.readStringUntil(';');
-    //String CMD = SerialBT.readString();
-    Serial.println(CMD);
-    ESPNOWSerial.println( CMD );
-    String resposta = terminal(CMD.c_str());
-    Serial.println(resposta);
-    ESPNOWSerial.println(resposta);
-  }
-
 }
