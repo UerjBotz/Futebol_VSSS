@@ -259,8 +259,8 @@ def loop():
                 saver.end()
             state = 0
             gui.serial.tx.stop()
-            gui.serial.tx.println("pid_w.I 0.0")
-            gui.serial.tx.println("pid_w.I_MAX 1.0")
+            gui.serial.tx.set_pid_I(0.0, bot=0)
+            #gui.serial.tx.println("I_MAX 1.0") #TODO
         LAST_MODE = MODE
         ## =========================================================
 
@@ -277,6 +277,8 @@ def loop():
         bot_angular_speed = round((20 / 100) * gui.painel_pid.sliders["w"].get(), 3)
         ## ==============================================================
 
+        centro = int(campo_mm_x / 2) + 1j * int(campo_mm_y / 2)
+
         ## [3] ##
         ## Input vision data ============================================
         pos, theta, bot_ok = centro, 0, False # mudar pra bot_existe
@@ -286,8 +288,6 @@ def loop():
                 break
 
         ball, ball_ok = vs_info.ball.pos, vs_info.ball.ok
-
-        centro = int(campo_mm_x / 2) + 1j * int(campo_mm_y / 2)
 
         x = y = vl = vr = dist = erro = d_theta = 0
         erro_l = erro_g = 0
@@ -553,9 +553,13 @@ def loop():
         # el
         if MODE != "STOP" and bot_in_range:
             color = (60, 255, 255)
-            gui.serial.tx.println(
-                f" pid_w.I_MAX 0.05 pid_w.kd 0.7 pid_w.ki 1500 pid.auto 1 pid.auto_speed {bot_linear_speed} pid.auto_angle {bot_angular_speed}"
-            )
+            #gui.serial.tx.set_pid_I_MAX(bot=0, 0.05) #TODO
+            gui.serial.tx.set_pid_kd(0.7,  bot=0)
+            gui.serial.tx.set_pid_ki(1500, bot=0)
+            gui.serial.tx.set_pid_auto(1, bot=0) #TODO: ver no transmissor essa func
+            gui.serial.tx.set_pid_speed(bot_linear_speed, bot=0)
+            gui.serial.tx.set_pid_angle(bot_angular_speed, bot=0)
+            
         else:
             color = (0, 255, 255)
             # gui.serial.tx.println( f" pid_w.I_MAX 0.05 pid_w.kd 0.7 pid_w.ki 1500 pid.auto 1 pid.auto_speed {1000} pid.auto_angle {3}" )

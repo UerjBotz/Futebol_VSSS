@@ -307,7 +307,8 @@ String terminal (const char *const cmd) {
 
   //-- motor --//
   else if (strcmp(key,"move") == 0 ) {
-         if(i == 2) motor.move( constrain(x,-1023,1023), constrain(x,-1023,1023) );
+    if     (i == 1) motor.move(1000, 1000);
+    else if(i == 2) motor.move( constrain(x,-1023,1023), constrain(x,-1023,1023) );
     else if(i >= 3) motor.move( constrain(x,-1023,1023), constrain(y,-1023,1023) );
     resposta += "move: " + String(motor.read(0)) + " " + String(motor.read(1)) + "\n";
     if (i==4) {
@@ -422,6 +423,9 @@ void setup() {
   PID_w.Imax = 1;
   
   //ESPNOWSerial.setReciveCallback( ESPNOWSerial_callback );
+
+  // // TESTE
+  // motor.move(1000, 1000);
 
 }
 

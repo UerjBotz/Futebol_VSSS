@@ -106,7 +106,19 @@ def close():
         print("[SERIAL] close")
         host.close()
 
+set_pid_I     = lambda i, bot: println(f"I {bot} {i}")
+#set_pid_I_MAX = lambda i, bot: println(f"I {bot} {i}") #TODO
 
+set_pid_kp    = lambda kp, bot: println(f"I {bot} {kp}")
+set_pid_ki    = lambda ki, bot: println(f"I {bot} {ki}")
+set_pid_kd    = lambda kd, bot: println(f"I {bot} {kd}")
+
+set_pid_auto  = lambda auto, bot: println(f"start {bot}") # TODO: certo?
+set_pid_speed = lambda linear_speed, bot:  println(f"speed {bot} {linear_speed}")
+set_pid_angle = lambda angular_speed, bot: println(f"w {bot} {angular_speed}") 
+
+
+"""
 if __name__ == "__main__":
     L = list_ports()
     print(L)
@@ -130,3 +142,4 @@ if __name__ == "__main__":
             L = list_ports()
             if len(L) > 0:
                 begin(L[0])
+"""
