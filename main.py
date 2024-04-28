@@ -259,7 +259,7 @@ def loop():
                 saver.end()
             state = 0
             gui.serial.tx.stop()
-            gui.serial.tx.set_pid_I(0.0, bot=0)
+            gui.serial.tx.set_pid_I(0.0)
             #gui.serial.tx.println("I_MAX 1.0") #TODO
         LAST_MODE = MODE
         ## =========================================================
@@ -554,11 +554,11 @@ def loop():
         if MODE != "STOP" and bot_in_range:
             color = (60, 255, 255)
             #gui.serial.tx.set_pid_I_MAX(bot=0, 0.05) #TODO
-            gui.serial.tx.set_pid_kd(0.7,  bot=0)
-            gui.serial.tx.set_pid_ki(1500, bot=0)
-            gui.serial.tx.set_pid_auto(1, bot=0) #TODO: ver no transmissor essa func
-            gui.serial.tx.set_pid_speed(bot_linear_speed, bot=0)
-            gui.serial.tx.set_pid_angle(bot_angular_speed, bot=0)
+            gui.serial.tx.set_pid_kd(0.7)
+            gui.serial.tx.set_pid_ki(1500)
+            gui.serial.tx.set_pid_auto(1) #TODO: ver no transmissor essa func
+            gui.serial.tx.set_pid_speed(bot_linear_speed)
+            gui.serial.tx.set_pid_angle(bot_angular_speed)
             
         else:
             color = (0, 255, 255)

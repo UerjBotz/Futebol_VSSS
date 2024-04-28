@@ -106,16 +106,20 @@ def close():
         print("[SERIAL] close")
         host.close()
 
-set_pid_I     = lambda i, bot: println(f"I {bot} {i}")
-#set_pid_I_MAX = lambda i, bot: println(f"I {bot} {i}") #TODO
+_ID_TODOS = -1
 
-set_pid_kp    = lambda kp, bot: println(f"I {bot} {kp}")
-set_pid_ki    = lambda ki, bot: println(f"I {bot} {ki}")
-set_pid_kd    = lambda kd, bot: println(f"I {bot} {kd}")
+set_pid_P     = lambda i,  bot=_ID_TODOS: println(f"P {bot} {i}")
+set_pid_I     = lambda i,  bot=_ID_TODOS: println(f"I {bot} {i}")
+#set_pid_I_MAX = lambda i, bot=_ID_TODOS: println(f"I_MAX {bot} {i}")#TODO
+set_pid_D     = lambda i,  bot=_ID_TODOS: println(f"D {bot} {i}")
 
-set_pid_auto  = lambda auto, bot: println(f"start {bot}") # TODO: certo?
-set_pid_speed = lambda linear_speed, bot:  println(f"speed {bot} {linear_speed}")
-set_pid_angle = lambda angular_speed, bot: println(f"w {bot} {angular_speed}") 
+set_pid_kp    = lambda kp, bot=_ID_TODOS: println(f"kp {bot} {kp}")
+set_pid_ki    = lambda ki, bot=_ID_TODOS: println(f"ki {bot} {ki}")
+set_pid_kd    = lambda kd, bot=_ID_TODOS: println(f"kd {bot} {kd}")
+
+set_pid_auto  = lambda auto,bot=_ID_TODOS: println(f"start {bot}") #TODO: certo?
+set_pid_speed = lambda lin, bot=_ID_TODOS: println(f"speed {bot} {lin}")
+set_pid_angle = lambda ang, bot=_ID_TODOS: println(f"w {bot} {ang}") 
 
 
 """

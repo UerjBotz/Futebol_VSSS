@@ -238,6 +238,7 @@ String str_array(const char *nome, T * arr, uint32_t sz){
   return str;
 }
 
+#define ID_TODOS -1
 #define ID_ROBO 2
 
 String terminal (const char *const cmd) {
@@ -246,7 +247,7 @@ String terminal (const char *const cmd) {
   int i = sscanf(cmd,"%s %d %f %f %f ",key,&id,&x,&y,&z);
   if (i == 0) return "> fail";
 
-  if (id != ID_ROBO) return ""; i--;
+  if (id != ID_ROBO && id != ID_TODOS) return ""; else i--;
 
   String resposta = "> ";
   //-- comandos MCU --//

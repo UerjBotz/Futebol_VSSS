@@ -3,12 +3,15 @@ import cv2
 import time
 import numpy as np
 
+from math import isnan as is_nan
 from cmath import polar
 from threading import Thread
 from dataclasses import dataclass, field
 
-def complex_to_xy(cp):
-    return np.array([cp.real, cp.imag], np.int32)
+def complex_to_xy(cp, subst=1): #TODO: ver se o problema não é antes (ele é)
+    r, i = cp.real, cp.imag
+    return np.array([subst if is_nan(r) else r,
+                     subst if is_nan(i) else i], np.int32)
 
 
 def xy_to_complex(points):
@@ -162,7 +165,7 @@ def link_0(
     return (center, tag, v)
 
 
-def sort_bots(dic: dict[int, dict]):
+def sort_bots(dic: dict[int, dict]): #TODO: esse dict é um bot_info
     a = sorted(dic.items(), key=lambda bot: bot[0])
     return {b[0]: b[1] for b in a}
 

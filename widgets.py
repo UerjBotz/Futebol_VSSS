@@ -39,7 +39,7 @@ def tk_icon(w, h, path):
     return icon
 
 
-# SLIDERS ============================================================================================================
+# SLIDERS ===============================================================
 class window:
     def __init__(
         self,
@@ -50,7 +50,7 @@ class window:
         theme="black",
         background="#222222",
     ) -> None:
-        # INICIA A JANELA =========================================================
+        # INICIA A JANELA ===============================================
         self.win = ThemedTk()
         self.win.geometry(f"{width}x{height}")
         self.win.title(title)
@@ -59,8 +59,8 @@ class window:
 
         if ico is not None:
             pass  # self.win.iconphoto(False, PhotoImage(file=ico))
-        # =========================================================================
-        # style ==================================================================
+
+        # style =========================================================
         style = ttk.Style(self.win)
         style.theme_use("black")
         # style.theme_use("equilux")
@@ -80,10 +80,9 @@ class window:
 
         for t in themes_options2:
             theme_menu.add_command(label=t, command=lambda t=t: changer(t))
-        # ========================================================================
 
 
-# SLIDERS ============================================================================================================
+# SLIDERS ===============================================================
 class slider:
     def __init__(
         self,
@@ -154,7 +153,7 @@ class slider:
         return int(self.scale.get())
 
     def update_label(self):
-        self.label.configure(text=f" {self.name}: {int(self.scale.get())}{self.unit}")
+        self.label.configure(text=f" {self.name}: {self.scale.get():.0f}{self.unit}")
 
     def color(self, txt_color):
         self.label.configure(foreground=txt_color)
@@ -163,7 +162,7 @@ class slider:
         self.str_var.set(constrain(x, self.MIN, self.MAX))
 
 
-# PAINEL ============================================================================================================
+# PAINEL ================================================================
 class painel:
 
     def __init__(self, name, main_frame, x=0, y=0) -> None:
@@ -814,9 +813,9 @@ class bot_tag:
         pic = ImageTk.PhotoImage(image)
         self.tag.configure(image=pic)
         self.tag.image = pic
-        self.label_pos.configure(text=f"(x,y): ({int(x)},{int(y)})")
-        self.label_theta.configure(text=f"Theta: {int(theta)}°")
-        self.label_LW.configure(text=f"(W,H): ({int(w)},{int(h)})")
+        self.label_pos.configure(text=f"(x,y): ({x:.0f},{y:.0f})")
+        self.label_theta.configure(text=f"Theta: {theta:.0f}°")
+        self.label_LW.configure(text=f"(W,H): ({w:.0f},{h:.0f})")
 
     def update_pack(self, pack):
         self.update(
