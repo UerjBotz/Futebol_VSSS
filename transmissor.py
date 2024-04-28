@@ -3,7 +3,7 @@ import glob
 import serial
 from time import sleep
 
-host = None
+host: serial.Serial | None = None
 
 
 def begin(porta):
@@ -41,20 +41,16 @@ def begin_host(porta):
 def list_ports():
     """Lists serial port names
 
-    :raises EnvironmentError:
-        On unsupported or unknown platforms
     :returns:
         A list of the serial ports available on the system
     """
     if sys.platform.startswith("win"):
         ports = [f"COM{i + 1}" for i in range(256)]
-    elif sys.platform.startswith("linux") or sys.platform.startswith("cygwin"):
-        # this excludes your current terminal "/dev/tty"
-        ports = glob.glob("/dev/tty[A-Za-z]*")
-    elif sys.platform.startswith("darwin"):
-        ports = glob.glob("/dev/tty.*")
     else:
-        raise EnvironmentError("Unsupported platform")
+        #ports = glob.glob("/dev/tty.*")
+        ports = glob.glob("/dev/tty[A-Za-z]*[0-9]*")
+
+    #TODO: lidar com plataformas erradas
 
     result = []
     for port in ports:
@@ -62,14 +58,14 @@ def list_ports():
             s = serial.Serial(port)
             s.close()
             result.append(port)
-        except (OSError, serial.SerialException):
+        except OSError:
             pass
+        except serial.SerialException as se:
+            print(f"SerialException: {port}: {se}")
 
+    if not result:
+        print("[SERIAL]: porta não encontrada. está ocupada?")
     return result
-
-
-def send_ch_333(data: list[int]) -> str:
-    send([333] + data)
 
 
 def send(data: list[int]) -> str:
@@ -95,11 +91,6 @@ def write(msg):
 def println(msg):
     write(msg + "\n")
 
-
-def stop():
-    println("pid.auto 0 bot.stop")
-
-
 def close():
     if host is not None:
         send_ch_333([])
@@ -117,10 +108,11 @@ set_pid_kp    = lambda kp, bot=_ID_TODOS: println(f"kp {bot} {kp}")
 set_pid_ki    = lambda ki, bot=_ID_TODOS: println(f"ki {bot} {ki}")
 set_pid_kd    = lambda kd, bot=_ID_TODOS: println(f"kd {bot} {kd}")
 
-set_pid_auto  = lambda auto,bot=_ID_TODOS: println(f"start {bot}") #TODO: certo?
+pid_start     = lambda      bot=_ID_TODOS: println(f"start {bot}")
 set_pid_speed = lambda lin, bot=_ID_TODOS: println(f"speed {bot} {lin}")
 set_pid_angle = lambda ang, bot=_ID_TODOS: println(f"w {bot} {ang}") 
 
+stop = lambda bot=_ID_TODOS: println(f"stop {bot}") #TODO: isso não para o PID!!!!!
 
 """
 if __name__ == "__main__":

@@ -22,7 +22,8 @@ String device_name = "Joões Lindos";
 #endif
 
 BluetoothSerial SerialBT;
-/*/
+/
+*/
 
 // ================================================================================
 // ESPNOWSerial
@@ -139,7 +140,10 @@ int pid_w (int lin, float w) {
   // Se estiver girado não mexe
   // -------------------------------------------------------------------------------------------------------------------------------------
   if (absf(IMU.ac_z_filter) > 4.0) motor.move(vl, vr);
-  else motor.stop();
+  else {
+    ESPNOWSerial.printf("parando. vr, vl = %d %d\n", vr, vl); //THEO: DEBUG
+    motor.stop();
+  }
 
   // -------------------------------------------------------------------------------------------------------------------------------------
   // LOGGING
@@ -239,7 +243,7 @@ String str_array(const char *nome, T * arr, uint32_t sz){
 }
 
 #define ID_TODOS -1
-#define ID_ROBO 2
+#define ID_ROBO 3
 
 String terminal (const char *const cmd) {
   
@@ -288,8 +292,6 @@ String terminal (const char *const cmd) {
   //-- help --//
   else if (strcmp(key,"help") == 0 ) {
     resposta += "help list:\n";
-    resposta += "speed_tg:\t" + String(pid_speed  ) + "\n";
-    resposta += "speed_w:\t"  + String(pid_speed_w) + "\n";
     resposta += "Kp:\t"       + String(PID_w.kp) + "\n";
     resposta += "Ki:\t"       + String(PID_w.ki) + "\n";
     resposta += "Kd:\t"       + String(PID_w.kd) + "\n";

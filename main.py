@@ -24,8 +24,8 @@ os.chdir(path)
 
 #### PID ##################################################
 
-bot_control_lin = pid()
-bot_control_ang = pid()
+bot_control_lin = pid() #TODO: UNUSED
+bot_control_ang = pid() #TODO: UNUSED
 
 LAST_MODE = ""
 vs_flag_new_data = False
@@ -35,7 +35,8 @@ vs_conf: vision_conf = vision_conf(0,0,0,0,{})
 _VS_OUT: dict = {}
 
 
-def constrain_angle(x, Min=-np.pi, Max=np.pi):
+def constrain_angle(x, Min: float=-np.pi, Max: float=np.pi) -> float:
+    # TODO: ValueError: cannot convert float NaN to integer
     return x - (Max - Min) * floor((x - Min) / (Max - Min))
 
 
@@ -175,7 +176,7 @@ def bench(frame):
     end = time.time()
     seconds = end - start
     fps = int(1 / max(seconds, 1e-5))
-    #print(f"Estimated frames per second : {fps} - {int(1000*seconds)}ms") # TODO: log
+    #print(f"Estimated frames per second : {fps} - {1000*seconds:0f}ms") # TODO: log
     cv2.putText(
         frame,
         f"FPS: {int(fps)}",
@@ -186,7 +187,6 @@ def bench(frame):
         2,
         cv2.LINE_AA,
     )
-    cv2.imshow("camera", frame)
     start = end
 
 
@@ -200,8 +200,9 @@ N = True
 from cmath import rect
 import datalogger as saver
 
+import time as tempo
 
-def loop():
+def loop(t_teste=2, teste_strat=tempo.time()):
 
     # RESIZE CAMERA IMAGE ===============================================
     global img, state, kick_step
@@ -258,8 +259,8 @@ def loop():
             if LAST_MODE == "VECT":
                 saver.end()
             state = 0
-            gui.serial.tx.stop()
-            gui.serial.tx.set_pid_I(0.0)
+            #gui.serial.tx.stop()
+            #gui.serial.tx.set_pid_I(0.0)
             #gui.serial.tx.println("I_MAX 1.0") #TODO
         LAST_MODE = MODE
         ## =========================================================
@@ -298,7 +299,7 @@ def loop():
             erro_g = constrain_angle(0 - theta)
         else:
             theta_set = polar(vector_d)[1]
-            erro_g = constrain_angle(theta_set - theta)
+            erro_g = constrain_angle(theta_set - theta) #TODO: (2) ValueError: cannot convert float NaN to integer
 
         if not ball_ok:
             ball = centro
@@ -312,7 +313,7 @@ def loop():
         x = int(pos.real)  # TODO: bot_x?
 
         ## Controle do robô =============================================
-        if bot_ok: # TODO: tirar esse if e ver oqq esse bot_ok é
+        if True: #bot_ok: # TODO: tirar esse if e ver oqq esse bot_ok é
 
             plot_x(monitors["vision"], pos, color=(110, 255, 255))
             kl = 0.1 * gui.painel_pid.sliders["kl"].get()
@@ -321,11 +322,29 @@ def loop():
             Q_obs = 0.2 * gui.painel_pid.sliders["Q_obs"].get()
             Dmin = gui.painel_pid.sliders["Dmin"].get()
             # bot_control_lin.ki = 0.1*gui.painel_pid.sliders['kd'].get()
-            bot_control_lin.I_max = 100
-            bot_control_lin.kp = kl
+            bot_control_lin.I_max = 100 #TODO: UNUSED
+            bot_control_lin.kp = kl #TODO: UNUSED
             
-            if False:
-                ...
+
+            if teste_strat == 1:
+                print("teste_strat1")
+                gui.serial.tx.pid_start()
+                gui.serial.tx.set_pid_speed(1000)
+                gui.serial.tx.set_pid_angle(0)
+
+                if tempo.time() - t_teste > 2:
+                    teste_strat = 2
+                    t_teste = tempo.time()
+            elif teste_strat == 2:
+                print("teste_strat2")
+                gui.serial.tx.pid_start()
+                gui.serial.tx.set_pid_speed(1000)
+                gui.serial.tx.set_pid_angle(3.14)
+
+                if tempo.time() - t_teste > 2:
+                    teste_strat = 1
+                    t_teste = tempo.time()
+
             elif MODE == "CENTRO": # MODO vai para o centro
                 # from controle import go2point
                 r1 = centro - pos
@@ -554,9 +573,9 @@ def loop():
         if MODE != "STOP" and bot_in_range:
             color = (60, 255, 255)
             #gui.serial.tx.set_pid_I_MAX(bot=0, 0.05) #TODO
+            gui.serial.tx.pid_start(1) #TODO: ver no transmissor essa func
             gui.serial.tx.set_pid_kd(0.7)
             gui.serial.tx.set_pid_ki(1500)
-            gui.serial.tx.set_pid_auto(1) #TODO: ver no transmissor essa func
             gui.serial.tx.set_pid_speed(bot_linear_speed)
             gui.serial.tx.set_pid_angle(bot_angular_speed)
             
