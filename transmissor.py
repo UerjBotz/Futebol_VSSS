@@ -22,22 +22,6 @@ def begin(porta):
         return False
 
 
-def begin_host(porta):
-    global host
-    if porta != "x":
-        if host is not None:
-            if host.port == porta:
-                print("[SERIAL] port ->", host.port)
-                return True
-        host = serial.Serial(porta, 115200, timeout=0.1, writeTimeout=0.1)
-        print("[SERIAL] port ->", host.port)
-        return (host, True)
-    else:
-        print("[SERIAL] port -> None [not connected]")
-        host = None
-        return (host, False)
-
-
 def list_ports():
     """Lists serial port names
 
@@ -68,13 +52,6 @@ def list_ports():
     return result
 
 
-def send(data: list[int]) -> str:
-    msg = "Send "
-    for d in data:
-        msg += f"{d} "
-    println(msg)
-
-
 def write(msg):
     global host
     if host is not None:
@@ -85,6 +62,7 @@ def write(msg):
             # host.flush()
             host.reset_output_buffer()
         except:
+            print("[SERIAL] FALHA! na msg:", msg)
             host = None
 
 
@@ -93,9 +71,9 @@ def println(msg):
 
 def close():
     if host is not None:
-        send_ch_333([])
-        print("[SERIAL] close")
+        stop()
         host.close()
+        print("[SERIAL] close")
 
 _ID_TODOS = -1
 
@@ -112,7 +90,13 @@ pid_start     = lambda      bot=_ID_TODOS: println(f"start {bot}")
 set_pid_speed = lambda lin, bot=_ID_TODOS: println(f"speed {bot} {lin}")
 set_pid_angle = lambda ang, bot=_ID_TODOS: println(f"w {bot} {ang}") 
 
-stop = lambda bot=_ID_TODOS: println(f"stop {bot}") #TODO: isso não para o PID!!!!!
+set_pid = lambda *, lin, ang, bot=_ID_TODOS: (
+                     set_pid_speed(lin, bot),
+                     #set_pid_angle(ang, bot)
+                 )
+
+move = lambda m1, m2, bot=_ID_TODOS: println(f"move {bot} {m1} {m2}") 
+stop = lambda bot=_ID_TODOS: println(f"stop {bot}") #TODO: isso não para o PID!!!!! #TODO: mandar mais de uma vez
 
 """
 if __name__ == "__main__":

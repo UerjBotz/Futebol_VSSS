@@ -149,7 +149,7 @@ def step_callback():
             if gui.rec_step.n == 0:
                 gui.rec_step.save_lable(["x", "y"])
                 v = int(10 * gui.rec_step.voltage.get())
-                # gui.serial.tx.send_ch_333( [ v,v, v,v, v,v ] )
+                # tx.send_ch_333( [ v,v, v,v, v,v ] )
 
             if len(vs_data.teams["team_yellow"]) > 0:
                 ID = list(vs_data.teams["team_yellow"].keys())[0]
@@ -160,7 +160,7 @@ def step_callback():
             gui.rec_step.save_line(rec_data)
             if not gui.rec_step.Flag_save:
                 print("-- END --")
-                # gui.serial.tx.send_ch_333( [] )
+                # tx.send_ch_333( [] )
 
 
 gui.rec_step.call = step_callback
@@ -200,9 +200,16 @@ N = True
 from cmath import rect
 import datalogger as saver
 
+#DEBUG THEO
 import time as tempo
+import transmissor as tx
+tx.begin("/dev/ttyUSB0")
+tx.pid_start()
+tx.pid_start()
+tx.pid_start()
+#DEBUG
 
-def loop(t_teste=2, teste_strat=tempo.time()):
+def loop(t0=tempo.time()):
 
     # RESIZE CAMERA IMAGE ===============================================
     global img, state, kick_step
@@ -259,9 +266,9 @@ def loop(t_teste=2, teste_strat=tempo.time()):
             if LAST_MODE == "VECT":
                 saver.end()
             state = 0
-            #gui.serial.tx.stop()
-            #gui.serial.tx.set_pid_I(0.0)
-            #gui.serial.tx.println("I_MAX 1.0") #TODO
+            #tx.stop()
+            #tx.set_pid_I(0.0)
+            #tx.println("I_MAX 1.0") #TODO
         LAST_MODE = MODE
         ## =========================================================
 
@@ -326,25 +333,32 @@ def loop(t_teste=2, teste_strat=tempo.time()):
             bot_control_lin.kp = kl #TODO: UNUSED
             
 
-            if teste_strat == 1:
-                print("teste_strat1")
-                gui.serial.tx.pid_start()
-                gui.serial.tx.set_pid_speed(1000)
-                gui.serial.tx.set_pid_angle(0)
+            print("teste_strat1")
 
-                if tempo.time() - t_teste > 2:
-                    teste_strat = 2
-                    t_teste = tempo.time()
-            elif teste_strat == 2:
-                print("teste_strat2")
-                gui.serial.tx.pid_start()
-                gui.serial.tx.set_pid_speed(1000)
-                gui.serial.tx.set_pid_angle(3.14)
+            dt = tempo.time() - t0
+            if dt >= 3:
+                print(dt, t0)
+                tx.pid_start()
+                tx.pid_start()
+                tx.pid_start()
+                t0 = tempo.time()
 
-                if tempo.time() - t_teste > 2:
-                    teste_strat = 1
-                    t_teste = tempo.time()
+            tx.set_pid(lin=1000, ang=0)
+            #tx.stop()
+            #tx.move(0, 0)
+            #tx.set_pid_speed(1000)
+            #tx.set_pid_angle(0)
 
+            # elif teste_strat == 2:
+            #     print("teste_strat2")
+            #     tx.pid_start()
+            #     tx.set_pid_speed(1000)
+            #     tx.set_pid_angle(3.14)
+
+            #     if tempo.time() - t0 > 2:
+            #         teste_strat = 1
+            #         t0 = tempo.time()
+            """ pra rodar só o código novo
             elif MODE == "CENTRO": # MODO vai para o centro
                 # from controle import go2point
                 r1 = centro - pos
@@ -550,6 +564,7 @@ def loop(t_teste=2, teste_strat=tempo.time()):
             #    # kick
             # elif( MODE == 'PID 3' or MODE == 'Ball' ): # seguir bola ou zero
             #    # pid 3 e Ball
+            """
 
         # gui.tag_pid.set( f'({vl},{vr}) dist: {int(bot_control.P)}mm  d_theta: {int(constrain_angle(bot_control.erro_theta)*180/np.pi)}°' )
         # gui.tag_pid.set( f'({vl},{vr}) dist: {int(bot_control.P)}mm' )
@@ -568,21 +583,25 @@ def loop(t_teste=2, teste_strat=tempo.time()):
         #    color = (60,255,255)
         #    if( abs(bot_angular_speed) < 0.1 ):
         #        bot_angular_speed = 0
-        #    gui.serial.tx.println( f" pid_w.I_MAX 1 pid_w.kd 1.0 pid_w.ki 1500 pid.auto 1 pid.auto_speed {bot_linear_speed} pid.auto_angle {0} pid_w.I {bot_angular_speed}" )
+        #    tx.println( f" pid_w.I_MAX 1 pid_w.kd 1.0 pid_w.ki 1500 pid.auto 1 pid.auto_speed {bot_linear_speed} pid.auto_angle {0} pid_w.I {bot_angular_speed}" )
         # el
+
+        color = (60, 255, 255)
+        """ pra rodar só o código novo
         if MODE != "STOP" and bot_in_range:
             color = (60, 255, 255)
-            #gui.serial.tx.set_pid_I_MAX(bot=0, 0.05) #TODO
-            gui.serial.tx.pid_start(1) #TODO: ver no transmissor essa func
-            gui.serial.tx.set_pid_kd(0.7)
-            gui.serial.tx.set_pid_ki(1500)
-            gui.serial.tx.set_pid_speed(bot_linear_speed)
-            gui.serial.tx.set_pid_angle(bot_angular_speed)
+            #tx.set_pid_I_MAX(bot=0, 0.05) #TODO
+            tx.pid_start() #TODO: ver no transmissor essa func
+            tx.set_pid_kd(0.7)
+            tx.set_pid_ki(1500)
+            tx.set_pid_speed(bot_linear_speed)
+            tx.set_pid_angle(bot_angular_speed)
             
         else:
             color = (0, 255, 255)
-            # gui.serial.tx.println( f" pid_w.I_MAX 0.05 pid_w.kd 0.7 pid_w.ki 1500 pid.auto 1 pid.auto_speed {1000} pid.auto_angle {3}" )
-            gui.serial.tx.stop()
+            # tx.println( f" pid_w.I_MAX 0.05 pid_w.kd 0.7 pid_w.ki 1500 pid.auto 1 pid.auto_speed {1000} pid.auto_angle {3}" )
+            tx.stop()
+        """
 
         # indicações na tela
         if MODE != "STOP":
@@ -620,7 +639,7 @@ def gui_loop():
 
     vs_conf, _VS_OUT = gui.loop()
 
-
+import transmissor as tx
 def main() -> bool:
     try:
         gui_loop()
@@ -633,6 +652,10 @@ def main() -> bool:
         print(f"!!ERRO:: {e}")
         return False
     finally:
+        tx.stop()
+        tx.stop()
+        tx.stop()
+        tx.stop()
         gui.camera.close()
 
     return True
