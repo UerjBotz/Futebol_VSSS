@@ -4,16 +4,14 @@ import time
 import numpy as np
 
 from cmath import polar
-from threading import Thread
 from dataclasses import dataclass, field
 
-def complex_to_xy(cp):
+
+def complex_to_xy(cp: complex):
     return np.array([cp.real, cp.imag], np.int32)
 
-
-def xy_to_complex(points):
-    if len(points) <= 0:
-        return np.array([])
+def xy_to_complex(points: np.ndarray): #TODO: conferir tipo + add do retorno
+    if len(points) <= 0: return np.array([])
     return points @ np.array([[1], [1j]])[:, 0]
 
 
@@ -28,23 +26,23 @@ def plot_arrow(img, center, v, hue=0):
     )
 
 
-def rect_coord(P):
+def rect_coord(P: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]: #TODO: conferir tipos
     P = (P @ np.array([[1], [1j]]))[:, 0]
     center = np.mean(P)
+
     d = P - P[0]
     D = abs(d)
     sort = (-D).argsort()
-    d = d[sort]  # Dists ord.
-    D = D[sort]  # Dists ord.
+    d = d[sort] # Dists ord.
+    D = D[sort] # Dists ord.
     v = d[2] / D[2]
-    return (
-        np.array([center.real, center.imag], np.int64),
-        np.array([v.real, v.imag], np.float64),
-        np.array(D[1:3], np.int64),
-    )
+
+    return (np.array([center.real, center.imag], np.int64),
+            np.array([v.real, v.imag], np.float64),
+            np.array(D[1:3], np.int64))
 
 
-def filtra_contornos(mask, A_min=700, n=0):
+def filtra_contornos(mask, A_min=700, n=0): #TODO: tipos
     # Contornos
     contornos, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cnt_list = []
@@ -97,7 +95,7 @@ def match_contours(contours, shape="rect", tela=None): #TODO: tipos (principalme
 
 def link_0(
     R, points, colors, v, dimension, tag=("black", "black"), tela=None, delta=10
-) -> tuple[complex, tuple[str,str], complex]: # TODO: nome horrível, mudar
+) -> tuple[complex, tuple[str,str], complex]: # TODO: nome horrível, mudar. + tipos
 
     L_ref = 32.5 + 17.5j
     k = (dimension.real / 65 + dimension.imag / 30) / 2

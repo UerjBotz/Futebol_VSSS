@@ -8,7 +8,7 @@ from math import floor
 
 import gui
 from controle import new_pid as pid
-from vision_thread import vision, complex_to_xy, vision_conf, vision_info
+from vision import vision, complex_to_xy, vision_conf, vision_info
 
 
 #TODO: from controle import ... lá embaixo dentro de código (tirar)

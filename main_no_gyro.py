@@ -2,8 +2,7 @@ import os
 import time
 from cmath import polar, phase
 
-# from vision import vision
-from vision_thread import vision
+from vision import vision
 import numpy as np
 import gui
 from controle import pd, constrain, dif_driver_control

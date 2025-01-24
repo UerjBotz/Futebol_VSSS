@@ -14,7 +14,7 @@ from PIL import Image, ImageTk
 
 import config
 import widgets as wg
-from vision_thread import vision_info, bot_info, vision_conf
+from vision import vision_info, bot_info, vision_conf
 
 FILE = __file__
 path = os.path.dirname(FILE)

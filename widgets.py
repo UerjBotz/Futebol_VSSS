@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk, ImageOps
 
-from vision_thread import bot_info, ball_info
+from vision import bot_info, ball_info
 
 FILE = __file__
 local_path = os.path.dirname(FILE)
