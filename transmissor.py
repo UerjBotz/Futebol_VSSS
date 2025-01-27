@@ -5,7 +5,6 @@ from time import sleep
 
 host = None
 
-
 def begin(porta):
     global host
     if porta != "x":

@@ -165,7 +165,6 @@ class slider:
 
 # PAINEL ============================================================================================================
 class painel:
-
     def __init__(self, name, main_frame, x=0, y=0) -> None:
         self.name = name
         self.frame = ttk.Frame(main_frame, border=4)
@@ -339,9 +338,7 @@ class video_thread:
 
 
 class camera:
-
     def __init__(self, x, y, title, root) -> None:
-
         self.x = x
         self.y = y
         self.title = title
@@ -412,7 +409,6 @@ class camera:
                 pass
 
     def start(self, mode=0):
-
         print(f"[ CAMERA - start ] { mode }")
 
         # src: image or cap
@@ -479,9 +475,7 @@ class camera:
 
 
 class console_serial:
-
     def __init__(self, x, y, root):
-
         import transmissor as tx
 
         self.tx = tx
@@ -573,7 +567,6 @@ class save_image:
 
 
 class record:
-
     def __init__(self, x, y, root, call, path=local_path, dt=50):
         self.dt = dt
         w = 20
